@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-def generate_coefficients(coeffs, vector = np.zeros((5,)), depth = 0):
+def generate_coefficients(coeffs, vector = np.zeros((8,)), depth = 0):
     ''' Generate all coefficient vectors. '''
     if depth == 2:
         coeffs.append(vector)
@@ -37,7 +37,7 @@ def generate_coefficients(coeffs, vector = np.zeros((5,)), depth = 0):
             generate_coefficients(coeffs, new_vector, depth+1)
 
 FOURIER_DIM = 3
-SCALE_VECTOR = np.array([MAX_LENGTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, HEIGHT_DIFF, MAX_PLATWIDTH, MAX_TIME])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, HEIGHT_DIFF, MAX_PLATWIDTH, MAX_TIME])
 SHIFT_VECTOR = np.array([0, 0, 0, 0, 0, HEIGHT_DIFF, 0, 0])
 COEFFS = []
 generate_coefficients(COEFFS)
@@ -59,6 +59,12 @@ def fourier_basis(state):
         basis[i] = np.cos(coeff.dot(scaled))
     return basis
 
+def run_features(state):
+    return np.append(state, [1])
+
+def jump_features(state):
+    return np.append(state, [1])
+
 class Agent:
     '''
     Implements an agent with a parameterized or weighted policy.
@@ -70,18 +76,11 @@ class Agent:
     alpha = 0.1
     gamma = 0.9
     num = 100
-    action_features = [position_features, position_features]
-    parameter_features = [ball_features, keeper_features]
-
-    def __init__(self):
-        ''' Sets up the parameterized policy. '''
-        self.action_weights = [
-            np.zeros((5,)),
-            np.zeros((5,))]
-        kickto_weights = np.zeros((3, 2))
-        self.parameter_weights = [
-            np.array([,
-            np.array([[-GOAL_WIDTH/2 + 1, 0]]).T]
+    parameter_features = [run_features, jump_features]
+    action_weights = [[],[],[]]
+    parameter_weights = [
+        np.array([1, 0, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])]
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -96,7 +95,7 @@ class Agent:
         while not end_ep:
             act = self.action_policy(state)
             action = self.policy(state, act)
-            state, reward, end_ep, _ = simulator.take_action(action)
+            state, reward, end_ep = simulator.take_action(action)
             states.append(state)
             actions.append(action)
             rewards.append(reward)
@@ -138,11 +137,7 @@ class Agent:
         features = self.parameter_features[action](state)
         weights = self.parameter_weights[action]
         mean = weights.T.dot(features)
-        if action == 0:
-            covariance = self.variance * np.eye(2)
-            return np.random.multivariate_normal(mean, covariance)
-        else:
-            return np.random.normal(mean, self.variance)
+        return np.random.normal(mean, self.variance)
 
     def get_parameters(self):
         ''' Returns all the parameters in a vector. '''
@@ -265,7 +260,7 @@ class SarsaAgent(Agent):
         feat = self.action_features[act](state)
         end_episode = False
         while not end_episode:
-            new_state, reward, end_episode, _ = simulator.take_action(action)
+            new_state, reward, end_episode = simulator.take_action(action)
             new_action = self.policy(new_state)
             new_act = self.act_map[new_action]
             new_feat = self.action_features[new_act](new_state)
@@ -300,7 +295,7 @@ class SaxrsaxAgent(Agent):
         count = 0
         while not end_episode:
             action = self.policy(state, act)
-            state, reward, end_episode, _ = simulator.take_action(action)
+            state, reward, end_episode = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat) - self.jest
@@ -335,7 +330,6 @@ class FixedSarsaAgent(Agent):
 
     def __init__(self):
         ''' Initialize coeffs. '''
-        Agent.__init__(self)
         for i in range(3):
             self.action_weights[i] = np.zeros((BASIS_COUNT,))
 
@@ -352,7 +346,7 @@ class FixedSarsaAgent(Agent):
             np.zeros((BASIS_COUNT,))]
         while not end_episode:
             action = self.policy(state, act)
-            state, reward, end_episode, _ = simulator.take_action(action)
+            state, reward, end_episode = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)

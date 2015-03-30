@@ -84,7 +84,7 @@ class Simulator:
             self.player.velocity[0],
             self.platform1.size[0],
             self.gap,
-            self.spikes[1] - centre[1],
+            self.spikes.position[1] - centre[1],
             self.platform2.position[1] - centre[1],
             self.platform2.size[1],
             self.time])
