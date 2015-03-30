@@ -70,7 +70,7 @@ class Simulator:
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0] + self.platform1.position[0],
             self.platform1.position[1] + uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
         self.enemy2 = Enemy(self.platform2, 0)
-        self.spikes = Platform(vector(self.platform1.position[0] + self.platform1.size[0], 
+        self.spikes = Platform(vector(self.platform1.position[0] + self.platform1.size[0],
             self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
         self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
         self.floor = Platform(vector(self.platform1.position[0], self.platform1.position[1] - 2*HEIGHT_DIFF))
@@ -119,7 +119,6 @@ class Simulator:
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
         self.time += self.dt
-        print self.time
         self.states.append([self.player.position])
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1, self.enemy2]:

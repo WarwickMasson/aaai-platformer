@@ -79,8 +79,8 @@ class Agent:
     parameter_features = [run_features, jump_features]
     action_weights = [[],[],[]]
     parameter_weights = [
-        np.array([1, 0, 0, 0, 0, 0, 0, 0, 0]),
-        np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])]
+        np.array([100, 0, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([3000, 0, 0, 0, 0, 0, 0, 0, 0])]
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -207,7 +207,7 @@ class Agent:
             self.alpha *= (self.num + step) / (self.num + step + 1.0)
             returns.extend(rets)
             total += sum(rets)
-            print 'Step:', step, rets, total / (step + 1)
+            print 'Step:', step, sum(rets), total / (step + 1)
         return returns
 
 class SarsaAgent(Agent):
@@ -340,6 +340,7 @@ class FixedSarsaAgent(Agent):
         act = self.action_policy(state)
         feat = self.action_features[act](state)
         end_episode = False
+        rewards = []
         traces = [
             np.zeros((BASIS_COUNT,)),
             np.zeros((BASIS_COUNT,)),
@@ -349,6 +350,7 @@ class FixedSarsaAgent(Agent):
             state, reward, end_episode = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
+            rewards.append(reward)
             delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
             for i in range(3):
                 traces[i] *= self.lmb * self.gamma
@@ -357,7 +359,7 @@ class FixedSarsaAgent(Agent):
                 self.action_weights[i] += self.alpha * delta * traces[i] / COEFF_SCALE
             act = new_act
             feat = new_feat
-        return [reward]
+        return rewards
 
 class CmaesAgent(Agent):
     ''' Defines a CMA-ES agent. '''
