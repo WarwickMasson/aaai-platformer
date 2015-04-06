@@ -108,11 +108,11 @@ class Simulator:
     def terminal_check(self):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = False
-        reward = 1.0
+        reward = 0.0
         for entity in [self.enemy1, self.enemy2, self.spikes, self.floor]:
             if self.player.colliding(entity):
                 end_episode = True
-                reward = -10.0
+                reward = self.player.position[0]
         return reward, end_episode
 
     def update(self, action):
