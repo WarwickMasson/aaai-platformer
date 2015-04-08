@@ -210,68 +210,6 @@ class Agent:
             print 'Step:', step, sum(rets), total / (step + 1)
         return returns
 
-class SarsaAgent(Agent):
-    ''' A discretized parameter weight gradient-descent SARSA agent. '''
-
-    alpha = 0.1
-    name = 'sarsa'
-    legend = 'Sarsa(0)'
-    colour = 'r'
-    num = 1000
-
-    def __init__(self):
-        ''' Initialize the Sarsa Agent. '''
-        Agent.__init__(self)
-        self.action_count = 0
-        self.actions = []
-        self.action_weights = []
-        self.action_features = []
-        self.act_map = {}
-        resolution = 6
-        xvals = range(0, PITCH_LENGTH/2, resolution)
-        yvals = range(-PITCH_WIDTH/2, PITCH_WIDTH/2, resolution)
-        for xval in xvals:
-            for yval in yvals:
-                self.action_weights.append(np.zeros((5,)))
-                self.action_features.append(position_features)
-                action = ('kickto', (xval, yval))
-                self.actions.append(action)
-                self.act_map[action] = self.action_count
-                self.action_count += 1
-        for gval in range(-7, 8, 2):
-            self.action_weights.append(np.zeros((5,)))
-            self.action_features.append(position_features)
-            action = ('shootgoal', (gval,))
-            self.actions.append(action)
-            self.act_map[action] = self.action_count
-            self.action_count += 1
-
-    def policy(self, state):
-        ''' Define a discrete policy. '''
-        act = self.action_policy(state)
-        return self.actions[act]
-
-    def update(self):
-        ''' Learn for a single episode. '''
-        simulator = Simulator()
-        state = simulator.get_state()
-        action = self.policy(state)
-        act = self.act_map[action]
-        feat = self.action_features[act](state)
-        end_episode = False
-        while not end_episode:
-            new_state, reward, end_episode = simulator.take_action(action)
-            new_action = self.policy(new_state)
-            new_act = self.act_map[new_action]
-            new_feat = self.action_features[new_act](new_state)
-            delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
-            self.action_weights[act] += self.alpha * delta * feat
-            state = new_state
-            act = new_act
-            feat = new_feat
-            action = new_action
-        return [reward]
-
 class FixedSarsaAgent(Agent):
     ''' A fixed parameter weight gradient-descent SARSA agent. '''
 
