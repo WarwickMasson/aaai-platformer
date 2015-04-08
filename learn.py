@@ -272,52 +272,6 @@ class SarsaAgent(Agent):
             action = new_action
         return [reward]
 
-class SaxrsaxAgent(Agent):
-    ''' A fixed parameter weight gradient-descent SARSA agent. '''
-
-    name = 'saxrsax'
-    colour = 'b'
-    legend = 'Saxrsax'
-    alpha = 1.0
-    beta = 0.1
-    jest = 0
-    jrate = 0.05
-    num = 1000
-    episodes = 0
-
-    def update(self):
-        ''' Learn for a single episode. '''
-        simulator = Simulator()
-        state = simulator.get_state()
-        act = self.action_policy(state)
-        feat = self.action_features[act](state)
-        end_episode = False
-        count = 0
-        while not end_episode:
-            action = self.policy(state, act)
-            state, reward, end_episode = simulator.take_action(action)
-            new_act = self.action_policy(state)
-            new_feat = self.action_features[new_act](state)
-            delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat) - self.jest
-            self.action_weights[act] += self.alpha * delta * feat
-            if self.episodes > 2000:
-                if act == 0:
-                    grad1 = self.log_parameter_gradient(state, act, action[1][0], 0)
-                    grad2 = self.log_parameter_gradient(state, act, action[1][1], 1)
-                    normalizer = np.sqrt(norm(grad1)**2 + norm(grad2)**2)
-                    self.parameter_weights[act][:, 0] += self.beta * delta * grad1 / normalizer
-                    self.parameter_weights[act][:, 1] += self.beta * delta * grad2 / normalizer
-                else:
-                    grad = self.log_parameter_gradient(state, act, action[1][0], 0)
-                    self.parameter_weights[act][:, 0] += self.beta * delta * grad / norm(grad)
-            act = new_act
-            feat = new_feat
-            count += 1
-        self.jest = (1 - self.jrate * self.alpha) * self.jest + self.jrate * self.alpha * reward
-        self.episodes += 1
-        return [reward]
-
-
 class FixedSarsaAgent(Agent):
     ''' A fixed parameter weight gradient-descent SARSA agent. '''
 
