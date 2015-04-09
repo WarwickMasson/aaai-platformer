@@ -81,9 +81,9 @@ class Interface:
             self.simulator.enemy1.position = state[3]
             self.simulator.enemy2.position = state[4]
             self.simulator.spikes.position = state[5]
-            self.simulator.spikes.size = state[6]
-            self.simulator.platform1.size = state[7]
-            self.simulator.platform2.size = state[8]
+            self.simulator.platform1.size = state[6]
+            self.simulator.platform2.size = state[7]
+            self.simulator.spikes.size = state[8]
             self.draw()
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')
