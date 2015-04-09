@@ -119,7 +119,15 @@ class Simulator:
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
         self.time += self.dt
-        self.states.append([self.player.position])
+        self.states.append([self.player.position,
+                            self.platform1.position,
+                            self.platform2.position,
+                            self.enemy1.position,
+                            self.enemy2.position,
+                            self.spikes.position,
+                            self.platform1.size,
+                            self.platform2.size,
+                            self.spikes.size])
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1, self.enemy2]:
             entity.update(self.time)

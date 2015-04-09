@@ -77,10 +77,12 @@ class Agent:
     gamma = 0.9
     num = 100
     parameter_features = [run_features, jump_features]
-    action_weights = [[],[],[]]
     parameter_weights = [
         np.array([100, 0, 0, 0, 0, 0, 0, 0, 0]),
         np.array([3000, 0, 0, 0, 0, 0, 0, 0, 0])]
+
+    def __init__(self):
+        self.action_weights = [[],[],[]]
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -222,6 +224,7 @@ class FixedSarsaAgent(Agent):
 
     def __init__(self):
         ''' Initialize coeffs. '''
+        self.action_weights = [[],[],[]]
         for i in range(3):
             self.action_weights[i] = np.zeros((BASIS_COUNT,))
 

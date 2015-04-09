@@ -70,6 +70,28 @@ class Interface:
         self.window.blit(surf, (0, 0))
         pygame.display.update()
 
+    def draw_episode(self, simulator, name, save = False):
+        ''' Draw each state in the simulator into folder name. '''
+        lines = ""
+        self.simulator = simulator
+        for index, state in enumerate(self.simulator.states):
+            self.simulator.player.position = state[0]
+            self.simulator.platform1.position = state[1]
+            self.simulator.platform2.position = state[2]
+            self.simulator.enemy1.position = state[3]
+            self.simulator.enemy2.position = state[4]
+            self.simulator.spikes.position = state[5]
+            self.simulator.spikes.size = state[6]
+            self.simulator.platform1.size = state[7]
+            self.simulator.platform2.size = state[8]
+            self.draw()
+            if save:
+                pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')
+            lines += str(index) + '.png\n'
+            self.clock.tick()
+        with open('screens/' + name + '/filenames.txt', 'w') as filename:
+            filename.write(lines)
+
     def draw_entity(self, entity, colour):
         ''' Draws an entity as a rectangle. '''
         rect = pygame.Rect(entity.position[0] + self.centre[0], entity.position[1] + self.centre[1], entity.size[0], entity.size[1])
