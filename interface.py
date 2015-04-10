@@ -34,8 +34,8 @@ class Interface:
         ''' Uses input from the keyboard to control the player. '''
         keys_pressed = pygame.key.get_pressed()
         action_map = {
-            pygame.K_SPACE: ('jump', 3000),
-            pygame.K_d: ('run', 100),
+            pygame.K_SPACE: ('jump', 100),
+            pygame.K_d: ('run', 2),
         }
         action = None
         for key in action_map:
@@ -47,7 +47,7 @@ class Interface:
             self.simulator = Simulator()
 
     def update(self):
-        ''' Performs a single 100ms update. '''
+        ''' Performs a single 10ms update. '''
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

@@ -31,10 +31,11 @@ HEIGHT_DIFF = 100
 MIN_SPIKES = 200
 MAX_SPIKES = 300
 SPIKES_HEIGHT = 10
-MAX_ACCEL = 5000
-MAX_SPEED = 5000
 MAX_TIME = 10000
 MAX_WIDTH = 100000
+DT = 0.01
+MAX_ACCEL = 50 / DT
+MAX_SPEED = 50 / DT
 
 
 class Platform:
@@ -45,8 +46,6 @@ class Platform:
 
 class Simulator:
     ''' This class represents the environment. '''
-
-    dt = 0.01
 
     def __init__(self):
         ''' The entities are set up and added to a space. '''
@@ -118,7 +117,7 @@ class Simulator:
     def update(self, action):
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
-        self.time += self.dt
+        self.time += DT
         self.states.append([self.player.position,
                             self.platform1.position,
                             self.platform2.position,
@@ -142,15 +141,15 @@ class Simulator:
         ''' Take a full, stabilised update. '''
         end_episode = False
         run = True
+        act, params = action
         while run:
             reward, end_episode = self.update(action)
-            run = not end_episode
-            if action and run:
-                act, params = action
-                if act == "run":
-                    run = False
-                elif act == "jump":
-                    run = not self.on_platforms()
+            if act == "run":
+                run = False
+            elif act == "jump":
+                run = not self.on_platforms()
+            if end_episode:
+                run = False
             action = None
         state = self.get_state()
         return state, reward, end_episode
@@ -182,25 +181,25 @@ class Player(Enemy):
     decay = 1.0
 
     def __init__(self):
-        self.position = vector(0, self.size[1])
+        self.position = vector(0, PLATHEIGHT)
         self.velocity = vector(0.0, 0.0)
 
     def update(self, time):
         ''' Update the position and velocity. '''
-        self.position += self.velocity * Simulator.dt
+        self.position += self.velocity * DT
 
     def accelerate(self, accel):
         ''' Applies a power to the entity in direction theta. '''
         accel = bound_vector(accel, MAX_ACCEL)
-        self.velocity += accel * (Simulator.dt ** 2)
+        self.velocity += accel * DT
         self.velocity = bound_vector(self.velocity, MAX_SPEED)
 
     def run(self, power):
         self.velocity[0] *= self.decay
-        self.accelerate(vector(power, 0.0))
+        self.accelerate(vector(power / DT, 0.0))
 
     def jump(self, power):
-        self.accelerate(vector(0.0, power))
+        self.accelerate(vector(0.0, power / DT))
 
     def fall(self):
         self.accelerate(vector(0.0, -9.8))

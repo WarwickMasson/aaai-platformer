@@ -78,8 +78,8 @@ class Agent:
     num = 100
     parameter_features = [run_features, jump_features]
     parameter_weights = [
-        np.array([100, 0, 0, 0, 0, 0, 0, 0, 0]),
-        np.array([3000, 0, 0, 0, 0, 0, 0, 0, 0])]
+        np.array([0, 0, 0, 0, 0, 0, 0, 0, 2]),
+        np.array([0, 0, 0, 0, 0, 0, 0, 0, 100])]
 
     def __init__(self):
         self.action_weights = [[],[],[]]
