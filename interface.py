@@ -3,7 +3,7 @@ This file implements a simple pygame interface for the simulator.
 The simulator can be controlled with the keyboard, or updated without controls.
 '''
 import numpy as np
-from simulator import Simulator
+from simulator import Simulator, DT
 import pygame
 import sys
 from util import vector_to_tuple, vector
@@ -54,7 +54,7 @@ class Interface:
                 sys.exit()
         self.control_update()
         self.draw()
-        self.clock.tick(100)
+        self.clock.tick(1000*DT)
 
     def draw(self):
         ''' Draw the field and players. '''

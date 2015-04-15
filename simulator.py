@@ -33,7 +33,7 @@ MAX_SPIKES = 300
 SPIKES_HEIGHT = 10
 MAX_TIME = 10000
 MAX_WIDTH = 100000
-DT = 0.01
+DT = 0.05
 MAX_ACCEL = 50 / DT
 MAX_SPEED = 50 / DT
 
@@ -104,14 +104,13 @@ class Simulator:
         else:
             self.player.fall()
 
-    def terminal_check(self):
+    def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = False
-        reward = 0.0
         for entity in [self.enemy1, self.enemy2, self.spikes, self.floor]:
             if self.player.colliding(entity):
                 end_episode = True
-                reward = self.player.position[0]
+                reward -= 100.0
         return reward, end_episode
 
     def update(self, action):
@@ -127,15 +126,19 @@ class Simulator:
                             self.platform1.size.copy(),
                             self.platform2.size.copy(),
                             self.spikes.size.copy()])
+        xpos = self.player.position[0]
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1, self.enemy2]:
             entity.update(self.time)
         for platform in [self.platform1, self.platform2]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
+        reward = self.player.position[0] - xpos
+        if self.player.on_platform(self.platform2):
+            reward += 100.0
         if self.player.above_platform(self.platform2):
             self.regenerate_platforms()
-        return self.terminal_check()
+        return self.terminal_check(reward)
 
     def take_action(self, action):
         ''' Take a full, stabilised update. '''

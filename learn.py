@@ -26,22 +26,23 @@ def weighted_selection(values):
         rand -= value
     return 0
 
+FOURIER_DIM = 5
 def generate_coefficients(coeffs, vector = np.zeros((8,)), depth = 0):
     ''' Generate all coefficient vectors. '''
-    if depth == 2:
+    if depth == 4:
         coeffs.append(vector)
     else:
-        for j in range(3):
+        for j in range(FOURIER_DIM):
             new_vector = np.copy(vector)
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1)
 
-FOURIER_DIM = 3
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, HEIGHT_DIFF, MAX_PLATWIDTH, MAX_TIME])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_TIME])
 SHIFT_VECTOR = np.array([0, 0, 0, 0, 0, HEIGHT_DIFF, 0, 0])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
+print BASIS_COUNT
 COEFF_SCALE = np.ones(BASIS_COUNT)
 for i in range(1, BASIS_COUNT):
     COEFF_SCALE[i] = norm(COEFFS[i])
@@ -207,7 +208,7 @@ class Agent:
         for step in range(steps):
             rets = self.update()
             self.alpha *= (self.num + step) / (self.num + step + 1.0)
-            returns.extend(rets)
+            returns.append(sum(rets))
             total += sum(rets)
             print 'Step:', step, sum(rets), total / (step + 1)
         return returns
@@ -218,7 +219,7 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.005
+    alpha = 0.1
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis]
 
