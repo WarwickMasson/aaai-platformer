@@ -331,7 +331,7 @@ class AlternatingAgent(FixedSarsaAgent):
             agent.action_weights = self.action_weights
             agent.parameter_weights = self.parameter_weights
             rets = agent.learn(self.qsteps)
-            returns.extend(rets)
+            returns.append(sum(rets))
             res = cma.fmin(function, self.get_parameters(), self.sigma)
             self.set_parameters(res[5])
         return returns
@@ -446,7 +446,7 @@ class QpamdpAgent(FixedSarsaAgent):
         for step in range(steps):
             new_ret = self.parameter_update()
             print new_ret
-            returns.extend(new_ret)
+            returns.append(sum(new_ret))
             for update in range(self.relearn):
                 new_ret = self.update()
                 print new_ret
@@ -467,22 +467,21 @@ class EnacAoAgent(QpamdpAgent):
         for step in range(2000):
             new_ret = self.update()
             self.alpha *= (self.num + step) / (self.num + step + 1.0)
-            print new_ret
-            returns.extend(new_ret)
+            print step, sum(new_ret)
+            returns.append(sum(new_ret))
             self.jval = (1 - self.jrate)*self.jval + self.jrate*sum(new_ret)
         for step in range(steps):
             for i in range(1000):
                 new_ret = self.parameter_update()
-		returns.extend(new_ret)
+		returns.append(sum(new_ret))
             self.beta *= (self.num2 + step) / (self.num2 + step + 1.0)
-            print new_ret
+            print step, sum(new_ret)
             for update in range(2000):
                 new_ret = self.update()
-                print new_ret
-                returns.extend(new_ret)
+                print step, update, sum(new_ret)
+                returns.append(sum(new_ret))
                 self.jval = (1 - self.jrate)*self.jval + self.jrate*sum(new_ret)
             self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
-            print step
         return returns
 
 class EnacAgent(QpamdpAgent):
@@ -535,7 +534,7 @@ class EnacAgent(QpamdpAgent):
         for step in range(steps):
             new_ret = self.parameter_update()
             print new_ret
-            returns.extend(new_ret)
+            returns.append(sum(new_ret))
             self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
             print step
         return returns
