@@ -147,9 +147,7 @@ class Agent:
         parameters = np.zeros((0,))
         for action in range(self.action_count):
             parameters = np.append(parameters, self.action_weights[action])
-            cols = self.parameter_weights[action].shape[1]
-            for col in range(cols):
-                parameters = np.append(parameters, self.parameter_weights[action][:, col])
+            parameters = np.append(parameters, self.parameter_weights[action])
         return parameters
 
     def set_parameters(self, parameters):
@@ -159,10 +157,9 @@ class Agent:
             size = self.action_weights[action].size
             self.action_weights[action] = parameters[index: index+size]
             index += size
-            rows, cols = self.parameter_weights[action].shape
-            for col in range(cols):
-                self.parameter_weights[action][:, col] = parameters[index: index+rows]
-                index += rows
+            rows = self.parameter_weights[action].size
+            self.parameter_weights[action] = parameters[index: index+rows]
+            index += rows
 
     def log_action_gradient(self, state, action, selection):
         ''' Returns the log gradient for action,
@@ -174,11 +171,11 @@ class Agent:
         else:
             return - prob * features / self.temperature
 
-    def log_parameter_gradient(self, state, action, value, col):
+    def log_parameter_gradient(self, state, action, value):
         ''' Returns the log gradient for the parameter,
-            given the state and the col of values. '''
+            given the state and the value. '''
         features = self.parameter_features[action](state)
-        mean = self.parameter_weights[action][:, col].dot(features)
+        mean = self.parameter_weights[action].dot(features)
         grad = (value - mean) * features / self.variance
         return grad
 
@@ -188,13 +185,12 @@ class Agent:
         for i in range(self.action_count):
             action_grad = self.log_action_gradient(state, i, action)
             grad = np.append(grad, action_grad)
-            rows, cols = self.parameter_weights[i].shape
+            rows = self.parameter_weights[i].size
             if i == action:
-                for col in range(cols):
-                    parameter_grad = self.log_parameter_gradient(state, i, value[col], col)
-                    grad = np.append(grad, parameter_grad)
+                parameter_grad = self.log_parameter_gradient(state, i, value)
+                grad = np.append(grad, parameter_grad)
             else:
-                grad = np.append(grad, np.zeros((rows*cols,)))
+                grad = np.append(grad, np.zeros((rows,)))
         return grad
 
     def update(self):
@@ -308,19 +304,16 @@ class AlternatingAgent(FixedSarsaAgent):
         ''' Get the parameter weights. '''
         parameters = np.zeros((0,))
         for action in range(self.action_count):
-            cols = self.parameter_weights[action].shape[1]
-            for col in range(cols):
-                parameters = np.append(parameters, self.parameter_weights[action][:, col])
+            parameters = np.append(parameters, self.parameter_weights[action])
         return parameters
 
     def set_parameters(self, parameters):
         ''' Set the parameters using a vector. '''
         index = 0
         for action in range(self.action_count):
-            rows, cols = self.parameter_weights[action].shape
-            for col in range(cols):
-                self.parameter_weights[action][:, col] = parameters[index: index+rows]
-                index += rows
+            rows = self.parameter_weights[action].size
+            self.parameter_weights[action] = parameters[index: index+rows]
+            index += rows
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
@@ -354,31 +347,27 @@ class QpamdpAgent(FixedSarsaAgent):
         ''' Get the parameter weights. '''
         parameters = np.zeros((0,))
         for action in range(self.action_count):
-            cols = self.parameter_weights[action].shape[1]
-            for col in range(cols):
-                parameters = np.append(parameters, self.parameter_weights[action][:, col])
+            parameters = np.append(parameters, self.parameter_weights[action])
         return parameters
 
     def set_parameters(self, parameters):
         ''' Set the parameters using a vector. '''
         index = 0
         for action in range(self.action_count):
-            rows, cols = self.parameter_weights[action].shape
-            for col in range(cols):
-                self.parameter_weights[action][:, col] = parameters[index: index+rows]
-                index += rows
+            rows = self.parameter_weights[action].size
+            self.parameter_weights[action] = parameters[index: index+rows]
+            index += rows
 
     def log_gradient(self, state, action, value):
         ''' Returns the log gradient for the entire policy. '''
         grad = np.zeros((0,))
         for i in range(self.action_count):
-            rows, cols = self.parameter_weights[i].shape
+            rows = self.parameter_weights[i].size
             if i == action:
-                for col in range(cols):
-                    parameter_grad = self.log_parameter_gradient(state, i, value[col], col)
-                    grad = np.append(grad, parameter_grad)
+                parameter_grad = self.log_parameter_gradient(state, i, value)
+                grad = np.append(grad, parameter_grad)
             else:
-                grad = np.append(grad, np.zeros((rows*cols,)))
+                grad = np.append(grad, np.zeros((rows,)))
         return grad
 
     def value_function(self, state):
@@ -474,8 +463,8 @@ class EnacAoAgent(QpamdpAgent):
             for i in range(1000):
                 new_ret = self.parameter_update()
 		returns.append(sum(new_ret))
+                print step, i, sum(new_ret), sum(returns) / len(returns)
             self.beta *= (self.num2 + step) / (self.num2 + step + 1.0)
-            print step, sum(new_ret)
             for update in range(2000):
                 new_ret = self.update()
                 print step, update, sum(new_ret)
@@ -496,9 +485,7 @@ class EnacAgent(QpamdpAgent):
         parameters = np.zeros((0,))
         for action in range(self.action_count):
             parameters = np.append(parameters, self.action_weights[action])
-            cols = self.parameter_weights[action].shape[1]
-            for col in range(cols):
-                parameters = np.append(parameters, self.parameter_weights[action][:, col])
+            parameters = np.append(parameters, self.parameter_weights[action])
         return parameters
 
     def set_parameters(self, parameters):
@@ -508,10 +495,9 @@ class EnacAgent(QpamdpAgent):
             size = self.action_weights[action].size
             self.action_weights[action] = parameters[index: index+size]
             index += size
-            rows, cols = self.parameter_weights[action].shape
-            for col in range(cols):
-                self.parameter_weights[action][:, col] = parameters[index: index+rows]
-                index += rows
+            rows = self.parameter_weights[action].size
+            self.parameter_weights[action] = parameters[index: index+rows]
+            index += rows
 
     def log_gradient(self, state, action, value):
         ''' Returns the log gradient for the entire policy. '''
@@ -519,13 +505,12 @@ class EnacAgent(QpamdpAgent):
         for i in range(self.action_count):
             action_grad = self.log_action_gradient(state, i, action)
             grad = np.append(grad, action_grad)
-            rows, cols = self.parameter_weights[i].shape
+            rows = self.parameter_weights[i].size
             if i == action:
-                for col in range(cols):
-                    parameter_grad = self.log_parameter_gradient(state, i, value[col], col)
-                    grad = np.append(grad, parameter_grad)
+                parameter_grad = self.log_parameter_gradient(state, i, value)
+                grad = np.append(grad, parameter_grad)
             else:
-                grad = np.append(grad, np.zeros((rows*cols,)))
+                grad = np.append(grad, np.zeros((rows,)))
         return grad
 
     def learn(self, steps):
