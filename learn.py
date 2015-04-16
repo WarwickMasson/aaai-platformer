@@ -216,7 +216,7 @@ class FixedSarsaAgent(Agent):
     colour = 'b'
     legend = 'Fixed Sarsa'
     alpha = 0.1
-    lmb = 0.0
+    lmb = 0.5
     action_features = [fourier_basis, fourier_basis, fourier_basis]
 
     def __init__(self):
