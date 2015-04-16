@@ -57,8 +57,6 @@ class Simulator:
         self.enemy2 = Enemy(self.platform2, 0)
         self.spikes = Platform(vector(self.platform1.size[0], self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
         self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
-        self.floor = Platform(vector(0, -2*HEIGHT_DIFF))
-        self.floor.size = vector(MAX_WIDTH, SPIKES_HEIGHT)
         self.states = []
         self.time = 0.0
 
@@ -72,8 +70,6 @@ class Simulator:
         self.spikes = Platform(vector(self.platform1.position[0] + self.platform1.size[0],
             self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
         self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
-        self.floor = Platform(vector(self.platform1.position[0], self.platform1.position[1] - 2*HEIGHT_DIFF))
-        self.floor.size = vector(MAX_WIDTH, SPIKES_HEIGHT)
 
     def get_state(self):
         ''' Returns the representation of the current state. '''
@@ -106,11 +102,12 @@ class Simulator:
 
     def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
-        end_episode = False
-        for entity in [self.enemy1, self.enemy2, self.spikes, self.floor]:
+        end_episode = self.player.position[1] < -3*HEIGHT_DIFF
+        for entity in [self.enemy1, self.enemy2, self.spikes]:
             if self.player.colliding(entity):
                 end_episode = True
-                reward -= 100.0
+        if end_episode:
+            reward -= 100.0
         return reward, end_episode
 
     def update(self, action):
