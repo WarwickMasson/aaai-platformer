@@ -338,8 +338,6 @@ class QpamdpAgent(FixedSarsaAgent):
     legend = 'Q-PAMDP'
     colour = 'g'
     beta = 0.2
-    jval = 0.0
-    jrate = 0.1
     num = 100
     num2 = 5000
 
@@ -396,25 +394,6 @@ class QpamdpAgent(FixedSarsaAgent):
         grad = omega_v[0:param_size, 0]
         return grad, returns
 
-    def delta_gradient(self):
-        ''' Compute the delta gradient. '''
-        param_size = self.get_parameters().size
-        psi = np.zeros((param_size, 0))
-        delta = np.zeros((0, 1))
-        returns = []
-        for run in range(self.runs):
-            states, actions, rewards, acts = self.run_episode()
-            t = 0
-            for state, action, reward, act in zip(states, actions, rewards, acts):
-                val = action[1]
-                psi = np.append(psi, to_matrix(self.log_gradient(state, act, val)), 1)
-                delta_value = reward + self.gamma * self.value_function(states[t+1]) - self.value_function(state) - self.jval
-                delta = np.append(delta, [delta_value])
-                t += 1
-            returns.append(sum(rewards))
-        grad = np.linalg.pinv(psi.T).dot(delta)
-        return grad, returns
-
     def parameter_update(self):
         ''' Perform a single gradient update. '''
         grad, returns = self.enac_gradient()
@@ -431,7 +410,6 @@ class QpamdpAgent(FixedSarsaAgent):
             self.alpha *= (self.num + step) / (self.num + step + 1.0)
             print new_ret
             returns.extend(new_ret)
-            self.jval = (1 - self.jrate)*self.jval + self.jrate*sum(new_ret)
         for step in range(steps):
             new_ret = self.parameter_update()
             print new_ret
@@ -458,7 +436,6 @@ class EnacAoAgent(QpamdpAgent):
             self.alpha *= (self.num + step) / (self.num + step + 1.0)
             print step, sum(new_ret)
             returns.append(sum(new_ret))
-            self.jval = (1 - self.jrate)*self.jval + self.jrate*sum(new_ret)
         for step in range(steps):
             for i in range(1000):
                 new_ret = self.parameter_update()
@@ -469,7 +446,6 @@ class EnacAoAgent(QpamdpAgent):
                 new_ret = self.update()
                 print step, update, sum(new_ret)
                 returns.append(sum(new_ret))
-                self.jval = (1 - self.jrate)*self.jval + self.jrate*sum(new_ret)
             self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
         return returns
 
