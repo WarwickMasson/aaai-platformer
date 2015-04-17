@@ -379,9 +379,9 @@ class QpamdpAgent(FixedSarsaAgent):
     def enac_gradient(self):
         ''' Compute the episodic NAC gradient. '''
         returns = np.zeros((self.runs, 1))
-        phi = lambda state: np.array([1, state[1], state[1]**2])
+        phi = lambda state: np.array([1, state[2], state[3], state[4], state[5], state[6]])
         param_size = self.get_parameters().size
-        psi = np.zeros((self.runs, param_size+3))
+        psi = np.zeros((self.runs, param_size+6))
         for run in range(self.runs):
             states, actions, rewards, acts = self.run_episode()
             returns[run, 0] = sum(rewards)
@@ -405,19 +405,18 @@ class QpamdpAgent(FixedSarsaAgent):
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
-        for step in range(2000):
+        for step in range(1000):
             new_ret = self.update()
-            self.alpha *= (self.num + step) / (self.num + step + 1.0)
             print new_ret
-            returns.extend(new_ret)
+            returns.append(sum(new_ret))
         for step in range(steps):
             new_ret = self.parameter_update()
             print new_ret
-            returns.append(sum(new_ret))
+            returns.extend(new_ret)
             for update in range(self.relearn):
                 new_ret = self.update()
                 print new_ret
-                returns.extend(new_ret)
+                returns.append(sum(new_ret))
             print step
         return returns
 
@@ -431,22 +430,15 @@ class EnacAoAgent(QpamdpAgent):
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
-        for step in range(2000):
-            new_ret = self.update()
-            self.alpha *= (self.num + step) / (self.num + step + 1.0)
-            print step, sum(new_ret)
-            returns.append(sum(new_ret))
         for step in range(steps):
             for i in range(1000):
-                new_ret = self.parameter_update()
-		returns.append(sum(new_ret))
-                print step, i, sum(new_ret), sum(returns) / len(returns)
-            self.beta *= (self.num2 + step) / (self.num2 + step + 1.0)
-            for update in range(2000):
                 new_ret = self.update()
-                print step, update, sum(new_ret)
+                print i, sum(new_ret)
                 returns.append(sum(new_ret))
-            self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
+            for i in range(100):
+                new_ret = self.parameter_update()
+		returns.extend(new_ret)
+                print step, i, sum(new_ret) / len(new_ret)
         return returns
 
 class EnacAgent(QpamdpAgent):
