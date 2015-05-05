@@ -22,13 +22,13 @@ def bound_vector(vect, maximum):
     yval = bound(vect[1], -maximum, maximum)
     return vector(xval, yval)
 
-MIN_PLATWIDTH = 100
+MIN_PLATWIDTH = 200
 MAX_PLATWIDTH = 300
 PLATHEIGHT = 40
-MIN_GAP = 100
+MIN_GAP = 150
 MAX_GAP = 200
-HEIGHT_DIFF = 100
-MIN_SPIKES = 200
+HEIGHT_DIFF = 50
+MIN_SPIKES = 250
 MAX_SPIKES = 300
 SPIKES_HEIGHT = 10
 MAX_TIME = 10000
@@ -196,7 +196,7 @@ class Player(Enemy):
 
     def run(self, power):
         self.velocity[0] *= self.decay
-        self.accelerate(vector(power / DT, 0.0))
+        self.accelerate(vector(abs(power) / DT, 0.0))
 
     def jump(self, power):
         self.accelerate(vector(0.0, power / DT))

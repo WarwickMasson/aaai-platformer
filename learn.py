@@ -72,7 +72,7 @@ class Agent:
     '''
 
     action_count = 2
-    temperature = 1.0
+    temperature = 0.01
     variance = 0.1
     alpha = 0.1
     gamma = 0.9
@@ -333,11 +333,11 @@ class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agen to optimize H(theta) using eNAC. '''
 
     relearn = 100
-    runs = 50
+    runs = 100
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 0.2
+    beta = 1.0
     num = 100
     num2 = 5000
 
@@ -407,15 +407,15 @@ class QpamdpAgent(FixedSarsaAgent):
         returns = []
         for step in range(1000):
             new_ret = self.update()
-            print new_ret
+            print sum(new_ret)
             returns.append(sum(new_ret))
         for step in range(steps):
             new_ret = self.parameter_update()
-            print new_ret
+            print sum(new_ret) / self.runs
             returns.extend(new_ret)
             for update in range(self.relearn):
                 new_ret = self.update()
-                print new_ret
+                print sum(new_ret)
                 returns.append(sum(new_ret))
             print step
         return returns
@@ -431,11 +431,11 @@ class EnacAoAgent(QpamdpAgent):
         ''' Learn for a given number of steps. '''
         returns = []
         for step in range(steps):
-            for i in range(1000):
+            for i in range(2000):
                 new_ret = self.update()
                 print i, sum(new_ret)
                 returns.append(sum(new_ret))
-            for i in range(100):
+            for i in range(500):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
                 print step, i, sum(new_ret) / len(new_ret)
@@ -492,9 +492,8 @@ class EnacAgent(QpamdpAgent):
             print step
         return returns
 
-def determine_variance(steps, runs = 1):
+def determine_variance(agent, steps, runs = 1):
     ''' Determine the variance of parameterized policy agent. '''
-    agent = Agent()
     rewards = []
     for _ in range(steps):
         reward = agent.evaluate_policy(runs)
