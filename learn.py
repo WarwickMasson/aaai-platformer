@@ -4,7 +4,7 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, MAX_TIME, MAX_GAP, HEIGHT_DIFF
+from simulator import Simulator, MAX_WIDTH, MAX_GAP, HEIGHT_DIFF
 from simulator import MAX_PLATWIDTH, MAX_SPEED, MAX_SPIKES
 from random import choice
 from util import to_matrix
@@ -26,19 +26,19 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 5
-def generate_coefficients(coeffs, vector = np.zeros((8,)), depth = 0):
+FOURIER_DIM = 6
+def generate_coefficients(coeffs, vector = np.zeros((9,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
-    if depth == 4:
+    if depth == vector.size or count == 2:
         coeffs.append(vector)
     else:
         for j in range(FOURIER_DIM):
             new_vector = np.copy(vector)
             new_vector[depth] = np.pi * j
-            generate_coefficients(coeffs, new_vector, depth+1)
+            generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_TIME])
-SHIFT_VECTOR = np.array([0, 0, 0, 0, 0, HEIGHT_DIFF, 0, 0])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 200.0])
+SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, 0.0, HEIGHT_DIFF, 0.0, 0.0, 100.0])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -60,30 +60,32 @@ def fourier_basis(state):
         basis[i] = np.cos(coeff.dot(scaled))
     return basis
 
-def run_features(state):
-    return np.append(state, [1])
+def enemy_features(state):
+    return np.array([1, state[0], state[1], state[7], state[8]])
 
-def jump_features(state):
-    return np.append(state, [1])
+def gap_features(state):
+    return np.array([1, state[0], state[1], state[2], state[3], state[4], state[5], state[6]])
 
 class Agent:
     '''
     Implements an agent with a parameterized or weighted policy.
     '''
 
-    action_count = 2
+    action_count = 4
     temperature = 0.01
     variance = 0.1
     alpha = 0.1
     gamma = 0.9
     num = 100
-    parameter_features = [run_features, jump_features]
+    parameter_features = [enemy_features, gap_features, enemy_features, gap_features]
     parameter_weights = [
-        np.array([0, 0, 0, 0, 0, 0, 0, 0, 2]),
-        np.array([0, 0, 0, 0, 0, 0, 0, 0, 100])]
+        np.array([0, 0, 0, 0, 0]),
+        np.array([5, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([100, 0, 0, 0, 0,]),
+        np.array([50, 0, 0, 0, 0, 0, 0, 0])]
 
     def __init__(self):
-        self.action_weights = [[],[],[]]
+        self.action_weights = [[],[],[],[]]
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -118,7 +120,7 @@ class Agent:
         if action == None:
             action = self.action_policy(state)
         parameters = self.parameter_policy(state, action)
-        action_names = ['run', 'jump']
+        action_names = ['run', 'run', 'jump', 'jump']
         return (action_names[action], parameters)
 
     def action_prob(self, state):
@@ -215,14 +217,14 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.1
-    lmb = 0.5
-    action_features = [fourier_basis, fourier_basis, fourier_basis]
+    alpha = 0.01
+    lmb = 0.0
+    action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 
     def __init__(self):
         ''' Initialize coeffs. '''
-        self.action_weights = [[],[],[]]
-        for i in range(3):
+        self.action_weights = [[],[],[], []]
+        for i in range(self.action_count):
             self.action_weights[i] = np.zeros((BASIS_COUNT,))
 
     def update(self):
@@ -236,6 +238,7 @@ class FixedSarsaAgent(Agent):
         traces = [
             np.zeros((BASIS_COUNT,)),
             np.zeros((BASIS_COUNT,)),
+            np.zeros((BASIS_COUNT,)),
             np.zeros((BASIS_COUNT,))]
         while not end_episode:
             action = self.policy(state, act)
@@ -244,10 +247,10 @@ class FixedSarsaAgent(Agent):
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
             delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
-            for i in range(3):
+            for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
-            for i in range(3):
+            for i in range(self.action_count):
                 self.action_weights[i] += self.alpha * delta * traces[i] / COEFF_SCALE
             act = new_act
             feat = new_feat
@@ -371,7 +374,7 @@ class QpamdpAgent(FixedSarsaAgent):
     def value_function(self, state):
         value = 0
         action_prob = self.action_prob(state)
-        for act in range(3):
+        for act in range(self.action_count):
             feat = self.action_features[act](state)
             value += action_prob[act]* self.action_weights[act].dot(feat)
         return value
@@ -431,11 +434,11 @@ class EnacAoAgent(QpamdpAgent):
         ''' Learn for a given number of steps. '''
         returns = []
         for step in range(steps):
-            for i in range(2000):
+            for i in range(1000):
                 new_ret = self.update()
                 print i, sum(new_ret)
                 returns.append(sum(new_ret))
-            for i in range(500):
+            for i in range(100):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
                 print step, i, sum(new_ret) / len(new_ret)

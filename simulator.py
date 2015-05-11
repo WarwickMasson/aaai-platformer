@@ -1,6 +1,5 @@
 '''
-This file implements a soccer simulator based on the robocup soccer simulator,
-but without sensory perceptions, networking, and real-time operation.
+This file implements the platformer rules.
 '''
 import numpy as np
 from numpy.random import uniform
@@ -22,20 +21,19 @@ def bound_vector(vect, maximum):
     yval = bound(vect[1], -maximum, maximum)
     return vector(xval, yval)
 
-MIN_PLATWIDTH = 200
-MAX_PLATWIDTH = 300
-PLATHEIGHT = 40
-MIN_GAP = 150
-MAX_GAP = 200
-HEIGHT_DIFF = 50
-MIN_SPIKES = 250
-MAX_SPIKES = 300
-SPIKES_HEIGHT = 10
-MAX_TIME = 10000
-MAX_WIDTH = 100000
+MIN_PLATWIDTH = 200.0
+MAX_PLATWIDTH = 300.0
+PLATHEIGHT = 40.0
+MIN_GAP = 150.0
+MAX_GAP = 200.0
+HEIGHT_DIFF = 50.0
+MIN_SPIKES = 250.0
+MAX_SPIKES = 300.0
+SPIKES_HEIGHT = 10.0
+MAX_WIDTH = 100000.0
 DT = 0.05
-MAX_ACCEL = 50 / DT
-MAX_SPEED = 50 / DT
+MAX_ACCEL = 50.0 / DT
+MAX_SPEED = 50.0 / DT
 
 
 class Platform:
@@ -53,12 +51,11 @@ class Simulator:
         self.platform1 = Platform(vector(0.0, 0.0))
         self.gap = uniform(MIN_GAP, MAX_GAP)
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
-        self.enemy1 = Enemy(self.platform1, 0)
-        self.enemy2 = Enemy(self.platform2, 0)
+        self.enemy1 = Enemy(self.platform1)
+        self.enemy2 = Enemy(self.platform2)
         self.spikes = Platform(vector(self.platform1.size[0], self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
         self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
         self.states = []
-        self.time = 0.0
 
     def regenerate_platforms(self):
         self.platform1 = self.platform2
@@ -66,7 +63,7 @@ class Simulator:
         self.gap = uniform(MIN_GAP, MAX_GAP)
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0] + self.platform1.position[0],
             self.platform1.position[1] + uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
-        self.enemy2 = Enemy(self.platform2, 0)
+        self.enemy2 = Enemy(self.platform2)
         self.spikes = Platform(vector(self.platform1.position[0] + self.platform1.size[0],
             self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
         self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
@@ -82,7 +79,8 @@ class Simulator:
             self.spikes.position[1] - centre[1],
             self.platform2.position[1] - centre[1],
             self.platform2.size[1],
-            self.time])
+            self.enemy1.position[0],
+            self.enemy1.dx])
         return state
 
     def on_platforms(self):
@@ -113,7 +111,6 @@ class Simulator:
     def update(self, action):
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
-        self.time += DT
         self.states.append([self.player.position.copy(),
                             self.platform1.position.copy(),
                             self.platform2.position.copy(),
@@ -125,8 +122,8 @@ class Simulator:
                             self.spikes.size.copy()])
         xpos = self.player.position[0]
         self.perform_action(action, self.player)
-        for entity in [self.player, self.enemy1, self.enemy2]:
-            entity.update(self.time)
+        for entity in [self.player, self.enemy1]:
+            entity.update()
         for platform in [self.platform1, self.platform2]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
@@ -156,25 +153,18 @@ class Simulator:
 
 class Enemy:
 
-    dx = 10.0
     size = vector(20.0, 30.0)
 
-    def __init__(self, platform, time):
+    def __init__(self, platform):
+        self.dx = -20.0
         self.platform = platform
-        self.set_position(time)
+        self.position = self.platform.size + self.platform.position
+        self.position[0] -= self.size[0]
 
-    def update(self, time):
-        self.set_position(time)
-
-    def set_position(self, time):
-        period = (self.platform.size[0] - self.size[0]) / self.dx
-        time = time % (2*period)
-        xpos = self.platform.position[0]
-        if time < period:
-            xpos += self.platform.size[0]-self.size[0] - time * self.dx
-        else:
-            xpos += (time - period) * self.dx
-        self.position = vector(xpos, self.platform.position[1] + self.platform.size[1])
+    def update(self):
+        self.position += vector(self.dx * DT, 0)
+        if not (0 <= self.position[0] - self.platform.position[0] <= self.platform.size[0] - self.size[0]):
+            self.dx *= -1
 
 class Player(Enemy):
 
@@ -184,7 +174,7 @@ class Player(Enemy):
         self.position = vector(0, PLATHEIGHT)
         self.velocity = vector(0.0, 0.0)
 
-    def update(self, time):
+    def update(self):
         ''' Update the position and velocity. '''
         self.position += self.velocity * DT
 
@@ -196,7 +186,7 @@ class Player(Enemy):
 
     def run(self, power):
         self.velocity[0] *= self.decay
-        self.accelerate(vector(abs(power) / DT, 0.0))
+        self.accelerate(vector(power / DT, 0.0))
 
     def jump(self, power):
         self.accelerate(vector(0.0, power / DT))
