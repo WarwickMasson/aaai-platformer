@@ -100,9 +100,14 @@ class Simulator:
         else:
             self.player.fall()
 
+    def lower_bound(self):
+        ''' Returns the lower bound of the platforms. '''
+        lower = min(self.platform1.position[1], self.platform2.position[1])
+        return lower - self.platform1.size[1]
+
     def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
-        end_episode = self.player.position[1] < -3*HEIGHT_DIFF
+        end_episode = self.player.position[1] < self.lower_bound()
         for entity in [self.enemy1, self.enemy2, self.spikes]:
             if self.player.colliding(entity):
                 end_episode = True
@@ -129,9 +134,7 @@ class Simulator:
         reward = self.player.position[0] - self.xpos
         if self.player.on_platform(self.platform2):
             print 'Made it onto!', reward
-            #reward += 100.0
         elif self.player.above_platform(self.platform2):
-            #reward += 50.0
             print 'Made it above!', reward
             self.regenerate_platforms()
         return self.terminal_check(reward)
@@ -153,7 +156,6 @@ class Simulator:
                 run = False
             action = None
             step += 1
-        #print act, params, step
         state = self.get_state()
         return state, reward, end_episode, step
 
