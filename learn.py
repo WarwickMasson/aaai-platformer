@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 6
+FOURIER_DIM = 7
 def generate_coefficients(coeffs, vector = np.zeros((9,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
     if depth == vector.size or count == 2:
@@ -72,20 +72,19 @@ class Agent:
     '''
 
     action_count = 4
-    temperature = 0.01
+    temperature = 0.1
     variance = 0.1
-    alpha = 0.1
-    gamma = 0.9
+    gamma = 0.999
     num = 100
     parameter_features = [enemy_features, gap_features, enemy_features, gap_features]
     parameter_weights = [
-        np.array([0, 0, 0, 0, 0]),
-        np.array([5, 0, 0, 0, 0, 0, 0, 0]),
-        np.array([100, 0, 0, 0, 0,]),
-        np.array([50, 0, 0, 0, 0, 0, 0, 0])]
+        np.array([2, 0, 0, 0, 0]),
+        np.array([10, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([50, 0, 0, 0, 0]),
+        np.array([25, 0, 0, 0, 0, 0, 0, 0])]
 
     def __init__(self):
-        self.action_weights = [[],[],[],[]]
+        self.action_weights = []
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -100,7 +99,7 @@ class Agent:
         while not end_ep:
             act = self.action_policy(state)
             action = self.policy(state, act)
-            state, reward, end_ep = simulator.take_action(action)
+            state, reward, end_ep, _ = simulator.take_action(action)
             states.append(state)
             actions.append(action)
             rewards.append(reward)
@@ -202,10 +201,10 @@ class Agent:
     def learn(self, steps):
         ''' Learn for the given number of update steps. '''
         returns = []
-        total = 0
+        total = 0.0
         for step in range(steps):
             rets = self.update()
-            self.alpha *= (self.num + step) / (self.num + step + 1.0)
+            #self.alpha *= (self.num + step) / (self.num + step + 1.0)
             returns.append(sum(rets))
             total += sum(rets)
             print 'Step:', step, sum(rets), total / (step + 1)
@@ -217,15 +216,15 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.01
+    alpha = 0.000001
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 
     def __init__(self):
         ''' Initialize coeffs. '''
-        self.action_weights = [[],[],[], []]
-        for i in range(self.action_count):
-            self.action_weights[i] = np.zeros((BASIS_COUNT,))
+        self.action_weights = []
+        for _ in range(self.action_count):
+            self.action_weights.append(np.zeros((BASIS_COUNT,)))
 
     def update(self):
         ''' Learn for a single episode. '''
@@ -235,18 +234,16 @@ class FixedSarsaAgent(Agent):
         feat = self.action_features[act](state)
         end_episode = False
         rewards = []
-        traces = [
-            np.zeros((BASIS_COUNT,)),
-            np.zeros((BASIS_COUNT,)),
-            np.zeros((BASIS_COUNT,)),
-            np.zeros((BASIS_COUNT,))]
+        traces = []
+        for i in range(self.action_count):
+            traces.append(np.zeros((BASIS_COUNT,)))
         while not end_episode:
             action = self.policy(state, act)
-            state, reward, end_episode = simulator.take_action(action)
+            state, reward, end_episode, step = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
-            delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
+            delta = reward + (self.gamma ** step) * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
@@ -382,9 +379,10 @@ class QpamdpAgent(FixedSarsaAgent):
     def enac_gradient(self):
         ''' Compute the episodic NAC gradient. '''
         returns = np.zeros((self.runs, 1))
-        phi = lambda state: np.array([1, state[2], state[3], state[4], state[5], state[6]])
+        phi = lambda state: np.array([1, state[2], state[3], state[4], state[5], state[6], state[2]**2, state[3]**2,
+            state[4]**2, state[5]**2, state[6]**2])
         param_size = self.get_parameters().size
-        psi = np.zeros((self.runs, param_size+6))
+        psi = np.zeros((self.runs, param_size+11))
         for run in range(self.runs):
             states, actions, rewards, acts = self.run_episode()
             returns[run, 0] = sum(rewards)
@@ -408,9 +406,9 @@ class QpamdpAgent(FixedSarsaAgent):
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
-        for step in range(1000):
+        for step in range(500):
             new_ret = self.update()
-            print sum(new_ret)
+            #print sum(new_ret)
             returns.append(sum(new_ret))
         for step in range(steps):
             new_ret = self.parameter_update()
@@ -434,11 +432,11 @@ class EnacAoAgent(QpamdpAgent):
         ''' Learn for a given number of steps. '''
         returns = []
         for step in range(steps):
-            for i in range(1000):
+            for i in range(500):
                 new_ret = self.update()
                 print i, sum(new_ret)
                 returns.append(sum(new_ret))
-            for i in range(100):
+            for i in range(0):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
                 print step, i, sum(new_ret) / len(new_ret)
@@ -491,7 +489,7 @@ class EnacAgent(QpamdpAgent):
             new_ret = self.parameter_update()
             print new_ret
             returns.append(sum(new_ret))
-            self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
+            #self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
             print step
         return returns
 
@@ -530,3 +528,14 @@ def extend_run(agent_class, steps, run):
     if agent != None:
         with file('./runs/'+agent_class.name +'/'+str(run)+'.obj', 'w') as file_handle:
             pickle.dump(agent, file_handle)
+
+def random_sample():
+    print 0, sum(QpamdpAgent().learn(0)) / 500
+    for i in range(1, 10):
+        agent = QpamdpAgent()
+        params = agent.get_parameters()
+        params += 2*np.random.randn(params.size)
+        agent.set_parameters(params)
+        rets = agent.learn(0)
+        print i, sum(rets) / 500
+        print agent.get_parameters()

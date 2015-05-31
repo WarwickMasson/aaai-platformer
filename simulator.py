@@ -45,6 +45,8 @@ class Platform:
 class Simulator:
     ''' This class represents the environment. '''
 
+    xpos = 0.0
+
     def __init__(self):
         ''' The entities are set up and added to a space. '''
         self.player = Player()
@@ -104,8 +106,6 @@ class Simulator:
         for entity in [self.enemy1, self.enemy2, self.spikes]:
             if self.player.colliding(entity):
                 end_episode = True
-        if end_episode:
-            reward -= 100.0
         return reward, end_episode
 
     def update(self, action):
@@ -120,17 +120,19 @@ class Simulator:
                             self.platform1.size.copy(),
                             self.platform2.size.copy(),
                             self.spikes.size.copy()])
-        xpos = self.player.position[0]
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1]:
             entity.update()
         for platform in [self.platform1, self.platform2]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
-        reward = self.player.position[0] - xpos
+        reward = self.player.position[0] - self.xpos
         if self.player.on_platform(self.platform2):
-            reward += 100.0
-        if self.player.above_platform(self.platform2):
+            print 'Made it onto!', reward
+            #reward += 100.0
+        elif self.player.above_platform(self.platform2):
+            #reward += 50.0
+            print 'Made it above!', reward
             self.regenerate_platforms()
         return self.terminal_check(reward)
 
@@ -139,6 +141,8 @@ class Simulator:
         end_episode = False
         run = True
         act, params = action
+        self.xpos = self.player.position[0]
+        step = 0
         while run:
             reward, end_episode = self.update(action)
             if act == "run":
@@ -148,8 +152,10 @@ class Simulator:
             if end_episode:
                 run = False
             action = None
+            step += 1
+        #print act, params, step
         state = self.get_state()
-        return state, reward, end_episode
+        return state, reward, end_episode, step
 
 class Enemy:
 
