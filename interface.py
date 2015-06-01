@@ -22,13 +22,11 @@ class Interface:
         self.window = pygame.display.set_mode(size)
         self.clock = pygame.time.Clock()
         self.simulator = simulator
-        self.background = pygame.Surface(size)
-        self.white = pygame.Color(255, 255, 255, 0)
-        self.black = pygame.Color(0, 0, 0, 0)
-        self.green = pygame.Color(0, 255, 0, 0)
-        self.red = pygame.Color(255, 0, 0, 0)
-        self.yellow = pygame.Color(255, 255, 0, 0)
-        self.background.fill(self.black)
+        self.background = pygame.image.load('./sprites/background.png')
+        self.platform = pygame.image.load('./sprites/platform.png')
+        self.enemy = pygame.image.load('./sprites/enemy.png')
+        self.spikes = pygame.image.load('./sprites/spikes.png')
+        self.player = pygame.image.load('./sprites/player.png')
 
     def control_update(self):
         ''' Uses input from the keyboard to control the player. '''
@@ -60,12 +58,12 @@ class Interface:
         ''' Draw the field and players. '''
         self.window.blit(self.background, (0, 0))
         self.centre = -self.simulator.player.position + vector(LENGTH, WIDTH)/2
-        self.draw_entity(self.simulator.player, self.green)
-        self.draw_entity(self.simulator.enemy1, self.red)
-        self.draw_entity(self.simulator.enemy2, self.red)
-        self.draw_entity(self.simulator.platform1, self.white)
-        self.draw_entity(self.simulator.platform2, self.white)
-        self.draw_entity(self.simulator.spikes, self.yellow)
+        self.draw_entity(self.simulator.player, self.player)
+        self.draw_entity(self.simulator.enemy1, self.enemy)
+        self.draw_entity(self.simulator.enemy2, self.enemy)
+        self.draw_entity(self.simulator.platform1, self.platform)
+        self.draw_entity(self.simulator.platform2, self.platform)
+        self.draw_entity(self.simulator.spikes, self.spikes)
         surf = pygame.transform.flip(self.window, False, True)
         self.window.blit(surf, (0, 0))
         pygame.display.update()
@@ -92,10 +90,12 @@ class Interface:
         with open('screens/' + name + '/filenames.txt', 'w') as filename:
             filename.write(lines)
 
-    def draw_entity(self, entity, colour):
+    def draw_entity(self, entity, sprite):
         ''' Draws an entity as a rectangle. '''
-        rect = pygame.Rect(entity.position[0] + self.centre[0], entity.position[1] + self.centre[1], entity.size[0], entity.size[1])
-        pygame.draw.rect(self.window, colour, rect)
+        for i in range(int(entity.size[0] / sprite.get_width())):
+            pos = entity.position + self.centre
+            pos[0] += int(sprite.get_width()*i)
+            self.window.blit(sprite, (pos[0], pos[1]))
 
 def main():
     ''' Runs the interface. '''
