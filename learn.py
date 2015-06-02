@@ -27,7 +27,7 @@ def weighted_selection(values):
     return 0
 
 FOURIER_DIM = 7
-def generate_coefficients(coeffs, vector = np.zeros((9,)), depth = 0, count = 0):
+def generate_coefficients(coeffs, vector = np.zeros((11,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
     if depth == vector.size or count == 2:
         coeffs.append(vector)
@@ -37,8 +37,8 @@ def generate_coefficients(coeffs, vector = np.zeros((9,)), depth = 0, count = 0)
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, 2*MAX_WIDTH, 200.0])
-SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, 0.0, HEIGHT_DIFF, 0.0, MAX_PLATWIDTH, 100.0])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, 2*MAX_WIDTH, 2*MAX_WIDTH, 3*MAX_WIDTH, MAX_PLATWIDTH, 2*MAX_WIDTH, 200.0, MAX_WIDTH, 2*MAX_WIDTH])
+SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, MAX_WIDTH, MAX_WIDTH, 0.0, MAX_PLATWIDTH, 100.0, 0.0, MAX_WIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -51,6 +51,10 @@ def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
     new_state = np.copy(state)
     scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
+    for i in range(scaled.size):
+        if not 0 <= scaled[i] <= 1:
+            print i, scaled[i]
+            assert(1 == 0)
     return scaled
 
 def fourier_basis(state):
@@ -215,7 +219,7 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.000001
+    alpha = 0.0001#0.000001
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 

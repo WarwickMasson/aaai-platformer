@@ -72,17 +72,18 @@ class Simulator:
 
     def get_state(self):
         ''' Returns the representation of the current state. '''
-        centre = self.platform1.position
         state = np.array([
-            self.player.position[0] - centre[0],
+            self.player.position[0],
             self.player.velocity[0],
             self.platform1.size[0],
             self.gap,
-            self.spikes.position[1] - centre[1],
-            self.platform2.position[1] - centre[1],
+            self.spikes.position[1],
+            self.platform2.position[1],
             self.platform2.size[0],
-            self.enemy1.position[0] - centre[0],
-            self.enemy1.dx])
+            self.enemy1.position[0],
+            self.enemy1.dx,
+            self.platform1.position[0],
+            self.platform1.position[1]])
         return state
 
     def on_platforms(self):
