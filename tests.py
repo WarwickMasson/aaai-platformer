@@ -6,6 +6,7 @@ from unittest import TestCase
 import numpy as np
 import simulator
 import util
+import learn
 
 ITERATIONS = 1000
 

@@ -37,8 +37,8 @@ def generate_coefficients(coeffs, vector = np.zeros((9,)), depth = 0, count = 0)
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 200.0])
-SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, 0.0, HEIGHT_DIFF, 0.0, 0.0, 100.0])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, MAX_GAP, MAX_SPIKES, 3*HEIGHT_DIFF, MAX_PLATWIDTH, 2*MAX_WIDTH, 200.0])
+SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, 0.0, HEIGHT_DIFF, 0.0, MAX_PLATWIDTH, 100.0])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -50,7 +50,8 @@ for i in range(1, BASIS_COUNT):
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
     new_state = np.copy(state)
-    return (new_state + SHIFT_VECTOR) / SCALE_VECTOR
+    scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
+    return scaled
 
 def fourier_basis(state):
     ''' Defines a fourier basis function. '''
@@ -74,8 +75,7 @@ class Agent:
     action_count = 4
     temperature = 0.1
     variance = 0.1
-    gamma = 0.999
-    num = 100
+    gamma = 1.0
     parameter_features = [enemy_features, gap_features, enemy_features, gap_features]
     parameter_weights = [
         np.array([2, 0, 0, 0, 0]),
@@ -204,7 +204,6 @@ class Agent:
         total = 0.0
         for step in range(steps):
             rets = self.update()
-            #self.alpha *= (self.num + step) / (self.num + step + 1.0)
             returns.append(sum(rets))
             total += sum(rets)
             print 'Step:', step, sum(rets), total / (step + 1)
@@ -338,8 +337,6 @@ class QpamdpAgent(FixedSarsaAgent):
     legend = 'Q-PAMDP'
     colour = 'g'
     beta = 1.0
-    num = 100
-    num2 = 5000
 
     def get_parameters(self):
         ''' Get the parameter weights. '''
@@ -408,7 +405,6 @@ class QpamdpAgent(FixedSarsaAgent):
         returns = []
         for step in range(500):
             new_ret = self.update()
-            #print sum(new_ret)
             returns.append(sum(new_ret))
         for step in range(steps):
             new_ret = self.parameter_update()
@@ -489,7 +485,6 @@ class EnacAgent(QpamdpAgent):
             new_ret = self.parameter_update()
             print new_ret
             returns.append(sum(new_ret))
-            #self.alpha *= (self.num2 + step) / (self.num2 + step + 1.0)
             print step
         return returns
 

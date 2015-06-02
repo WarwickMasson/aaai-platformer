@@ -80,8 +80,8 @@ class Simulator:
             self.gap,
             self.spikes.position[1] - centre[1],
             self.platform2.position[1] - centre[1],
-            self.platform2.size[1],
-            self.enemy1.position[0],
+            self.platform2.size[0],
+            self.enemy1.position[0] - centre[0],
             self.enemy1.dx])
         return state
 
@@ -132,10 +132,7 @@ class Simulator:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
         reward = self.player.position[0] - self.xpos
-        if self.player.on_platform(self.platform2):
-            print 'Made it onto!', reward
-        elif self.player.above_platform(self.platform2):
-            print 'Made it above!', reward
+        if self.player.above_platform(self.platform2):
             self.regenerate_platforms()
         return self.terminal_check(reward)
 
