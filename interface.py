@@ -26,6 +26,7 @@ class Interface:
         self.platform = pygame.image.load('./sprites/platform.png')
         self.enemy = pygame.image.load('./sprites/enemy.png')
         self.player = pygame.image.load('./sprites/player.png')
+        self.centre = vector(0, WIDTH)/2
 
     def control_update(self):
         ''' Uses input from the keyboard to control the player. '''
@@ -56,7 +57,6 @@ class Interface:
     def draw(self):
         ''' Draw the field and players. '''
         self.window.blit(self.background, (0, 0))
-        self.centre = -self.simulator.player.position + vector(LENGTH, WIDTH)/2
         self.draw_entity(self.simulator.player, self.player)
         self.draw_entity(self.simulator.enemy1, self.enemy)
         self.draw_entity(self.simulator.enemy2, self.enemy)
