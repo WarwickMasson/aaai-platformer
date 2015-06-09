@@ -219,7 +219,7 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.0001#0.000001
+    alpha = 0.000001
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 

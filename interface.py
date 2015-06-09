@@ -25,7 +25,6 @@ class Interface:
         self.background = pygame.image.load('./sprites/background.png')
         self.platform = pygame.image.load('./sprites/platform.png')
         self.enemy = pygame.image.load('./sprites/enemy.png')
-        self.spikes = pygame.image.load('./sprites/spikes.png')
         self.player = pygame.image.load('./sprites/player.png')
 
     def control_update(self):
@@ -63,7 +62,6 @@ class Interface:
         self.draw_entity(self.simulator.enemy2, self.enemy)
         self.draw_entity(self.simulator.platform1, self.platform)
         self.draw_entity(self.simulator.platform2, self.platform)
-        self.draw_entity(self.simulator.spikes, self.spikes)
         surf = pygame.transform.flip(self.window, False, True)
         self.window.blit(surf, (0, 0))
         pygame.display.update()
@@ -78,10 +76,8 @@ class Interface:
             self.simulator.platform2.position = state[2]
             self.simulator.enemy1.position = state[3]
             self.simulator.enemy2.position = state[4]
-            self.simulator.spikes.position = state[5]
             self.simulator.platform1.size = state[6]
             self.simulator.platform2.size = state[7]
-            self.simulator.spikes.size = state[8]
             self.draw()
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')

@@ -27,9 +27,6 @@ PLATHEIGHT = 40.0
 MIN_GAP = 150.0
 MAX_GAP = 200.0
 HEIGHT_DIFF = 50.0
-MIN_SPIKES = 250.0
-MAX_SPIKES = 300.0
-SPIKES_HEIGHT = 10.0
 MAX_WIDTH = 100000.0
 DT = 0.05
 MAX_ACCEL = 50.0 / DT
@@ -55,8 +52,6 @@ class Simulator:
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
-        self.spikes = Platform(vector(self.platform1.size[0], self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
-        self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
         self.states = []
 
     def regenerate_platforms(self):
@@ -66,9 +61,6 @@ class Simulator:
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0] + self.platform1.position[0],
             self.platform1.position[1] + uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
         self.enemy2 = Enemy(self.platform2)
-        self.spikes = Platform(vector(self.platform1.position[0] + self.platform1.size[0],
-            self.platform1.position[1] + uniform(MIN_SPIKES, MAX_SPIKES)))
-        self.spikes.size = vector(self.gap, SPIKES_HEIGHT)
 
     def get_state(self):
         ''' Returns the representation of the current state. '''
@@ -77,7 +69,6 @@ class Simulator:
             self.player.velocity[0],
             self.platform1.size[0],
             self.gap,
-            self.spikes.position[1],
             self.platform2.position[1],
             self.platform2.size[0],
             self.enemy1.position[0],
@@ -109,7 +100,7 @@ class Simulator:
     def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = self.player.position[1] < self.lower_bound()
-        for entity in [self.enemy1, self.enemy2, self.spikes]:
+        for entity in [self.enemy1, self.enemy2]:
             if self.player.colliding(entity):
                 end_episode = True
         return reward, end_episode
@@ -122,10 +113,9 @@ class Simulator:
                             self.platform2.position.copy(),
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy(),
-                            self.spikes.position.copy(),
                             self.platform1.size.copy(),
                             self.platform2.size.copy(),
-                            self.spikes.size.copy()])
+                            ])
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1]:
             entity.update()
