@@ -62,6 +62,7 @@ class Interface:
         self.draw_entity(self.simulator.enemy2, self.enemy)
         self.draw_entity(self.simulator.platform1, self.platform)
         self.draw_entity(self.simulator.platform2, self.platform)
+        self.draw_entity(self.simulator.platform3, self.platform)
         surf = pygame.transform.flip(self.window, False, True)
         self.window.blit(surf, (0, 0))
         pygame.display.update()
@@ -74,10 +75,12 @@ class Interface:
             self.simulator.player.position = state[0]
             self.simulator.platform1.position = state[1]
             self.simulator.platform2.position = state[2]
-            self.simulator.enemy1.position = state[3]
-            self.simulator.enemy2.position = state[4]
+            self.simulator.platform3.position = state[3]
+            self.simulator.enemy1.position = state[4]
+            self.simulator.enemy2.position = state[5]
             self.simulator.platform1.size = state[6]
             self.simulator.platform2.size = state[7]
+            self.simulator.platform3.size = state[8]
             self.draw()
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')

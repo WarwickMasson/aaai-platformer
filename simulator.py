@@ -50,6 +50,8 @@ class Simulator:
         self.platform1 = Platform(vector(0.0, 0.0))
         self.gap = uniform(MIN_GAP, MAX_GAP)
         self.platform2 = Platform(vector(self.gap + self.platform1.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
+        gap2 = uniform(MIN_GAP, MAX_GAP)
+        self.platform3 = Platform(self.platform2.position + vector(self.gap + self.platform2.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
         self.states = []
@@ -78,7 +80,7 @@ class Simulator:
         return state
 
     def on_platforms(self):
-        return self.player.on_platform(self.platform1) or self.player.on_platform(self.platform2)
+        return self.player.on_platform(self.platform1) or self.player.on_platform(self.platform2) or self.player.on_platform(self.platform3)
 
     def perform_action(self, action, agent):
         ''' Applies for selected action for the given agent. '''
@@ -94,15 +96,21 @@ class Simulator:
 
     def lower_bound(self):
         ''' Returns the lower bound of the platforms. '''
-        lower = min(self.platform1.position[1], self.platform2.position[1])
+        lower = min(self.platform1.position[1], self.platform2.position[1], self.platform3.position[1])
         return lower - self.platform1.size[1]
+
+    def right_bound(self):
+        return self.platform3.position[0] + self.platform3.size[0]
 
     def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = self.player.position[1] < self.lower_bound()
+        right = self.player.position[0] > self.right_bound()
         for entity in [self.enemy1, self.enemy2]:
             if self.player.colliding(entity):
                 end_episode = True
+        if right:
+            end_episode = True
         return reward, end_episode
 
     def update(self, action):
@@ -111,20 +119,19 @@ class Simulator:
         self.states.append([self.player.position.copy(),
                             self.platform1.position.copy(),
                             self.platform2.position.copy(),
+                            self.platform3.position.copy(),
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy(),
                             self.platform1.size.copy(),
                             self.platform2.size.copy(),
-                            ])
+                            self.platform3.size.copy()])
         self.perform_action(action, self.player)
         for entity in [self.player, self.enemy1]:
             entity.update()
-        for platform in [self.platform1, self.platform2]:
+        for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
         reward = self.player.position[0] - self.xpos
-        if self.player.above_platform(self.platform2):
-            self.regenerate_platforms()
         return self.terminal_check(reward)
 
     def take_action(self, action):
