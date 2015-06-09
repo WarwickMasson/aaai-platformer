@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, MAX_GAP, HEIGHT_DIFF
-from simulator import MAX_PLATWIDTH, MAX_SPEED, MAX_SPIKES
+from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy
 from random import choice
 from util import to_matrix
 import cma
@@ -27,7 +27,7 @@ def weighted_selection(values):
     return 0
 
 FOURIER_DIM = 7
-def generate_coefficients(coeffs, vector = np.zeros((11,)), depth = 0, count = 0):
+def generate_coefficients(coeffs, vector = np.zeros((13,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
     if depth == vector.size or count == 2:
         coeffs.append(vector)
@@ -37,8 +37,9 @@ def generate_coefficients(coeffs, vector = np.zeros((11,)), depth = 0, count = 0
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_PLATWIDTH, 2*MAX_WIDTH, 2*MAX_WIDTH, 3*MAX_WIDTH, MAX_PLATWIDTH, 2*MAX_WIDTH, 200.0, MAX_WIDTH, 2*MAX_WIDTH])
-SHIFT_VECTOR = np.array([0.0, 0.0, 0.0, 0.0, MAX_WIDTH, MAX_WIDTH, 0.0, MAX_PLATWIDTH, 100.0, 0.0, MAX_WIDTH])
+SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0]) 
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0, MAX_WIDTH, 40.0,
+MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_WIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -219,7 +220,7 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.000001
+    alpha = 0.0001
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 

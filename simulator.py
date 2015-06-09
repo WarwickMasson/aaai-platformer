@@ -61,14 +61,17 @@ class Simulator:
         state = np.array([
             self.player.position[0],
             self.player.velocity[0],
-            self.platform1.size[0],
-            self.gap,
-            self.platform2.position[1],
-            self.platform2.size[0],
             self.enemy1.position[0],
             self.enemy1.dx,
-            self.platform1.position[0],
-            self.platform1.position[1]])
+            self.enemy2.position[0],
+            self.enemy2.dx,
+            self.platform1.size[0],
+            self.platform2.position[0],
+            self.platform2.position[1],
+            self.platform2.size[0],
+            self.platform3.position[0],
+            self.platform3.position[1],
+            self.platform3.size[0]])
         return state
 
     def on_platforms(self):
