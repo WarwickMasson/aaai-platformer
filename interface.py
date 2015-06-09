@@ -73,14 +73,8 @@ class Interface:
         self.simulator = simulator
         for index, state in enumerate(self.simulator.states):
             self.simulator.player.position = state[0]
-            self.simulator.platform1.position = state[1]
-            self.simulator.platform2.position = state[2]
-            self.simulator.platform3.position = state[3]
-            self.simulator.enemy1.position = state[4]
-            self.simulator.enemy2.position = state[5]
-            self.simulator.platform1.size = state[6]
-            self.simulator.platform2.size = state[7]
-            self.simulator.platform3.size = state[8]
+            self.simulator.enemy1.position = state[1]
+            self.simulator.enemy2.position = state[2]
             self.draw()
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')

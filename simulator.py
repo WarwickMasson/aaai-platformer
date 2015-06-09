@@ -56,14 +56,6 @@ class Simulator:
         self.enemy2 = Enemy(self.platform2)
         self.states = []
 
-    def regenerate_platforms(self):
-        self.platform1 = self.platform2
-        self.enemy1 = self.enemy2
-        self.gap = uniform(MIN_GAP, MAX_GAP)
-        self.platform2 = Platform(vector(self.gap + self.platform1.size[0] + self.platform1.position[0],
-            self.platform1.position[1] + uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
-        self.enemy2 = Enemy(self.platform2)
-
     def get_state(self):
         ''' Returns the representation of the current state. '''
         state = np.array([
@@ -117,16 +109,10 @@ class Simulator:
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
         self.states.append([self.player.position.copy(),
-                            self.platform1.position.copy(),
-                            self.platform2.position.copy(),
-                            self.platform3.position.copy(),
                             self.enemy1.position.copy(),
-                            self.enemy2.position.copy(),
-                            self.platform1.size.copy(),
-                            self.platform2.size.copy(),
-                            self.platform3.size.copy()])
+                            self.enemy2.position.copy()])
         self.perform_action(action, self.player)
-        for entity in [self.player, self.enemy1]:
+        for entity in [self.player, self.enemy1, self.enemy2]:
             entity.update()
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
