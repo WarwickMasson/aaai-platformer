@@ -78,9 +78,9 @@ class Agent:
     '''
 
     action_count = 4
-    temperature = 0.1
+    temperature = 10.0
     variance = 0.1
-    gamma = 1.0
+    gamma = 0.9
     parameter_features = [enemy_features, gap_features, enemy_features, gap_features]
     parameter_weights = [
         np.array([2, 0, 0, 0, 0]),
@@ -220,7 +220,7 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.0001
+    alpha = 0.00001
     lmb = 0.0
     action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
 
