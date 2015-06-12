@@ -77,7 +77,7 @@ class Simulator:
     def on_platforms(self):
         return self.player.on_platform(self.platform1) or self.player.on_platform(self.platform2) or self.player.on_platform(self.platform3)
 
-    def perform_action(self, action, agent):
+    def perform_action(self, action, agent, dt = DT):
         ''' Applies for selected action for the given agent. '''
         if self.on_platforms():
             if action:
@@ -85,7 +85,7 @@ class Simulator:
                 if act == 'jump':
                     self.player.jump(parameters)
                 elif act == 'run':
-                    self.player.run(parameters)
+                    self.player.run(parameters, dt)
         else:
             self.player.fall()
 
@@ -108,15 +108,15 @@ class Simulator:
             end_episode = True
         return reward, end_episode
 
-    def update(self, action):
+    def update(self, action, dt = DT):
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
         self.states.append([self.player.position.copy(),
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
-        self.perform_action(action, self.player)
+        self.perform_action(action, self.player, dt)
         for entity in [self.player, self.enemy1, self.enemy2]:
-            entity.update()
+            entity.update(dt)
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
@@ -131,14 +131,19 @@ class Simulator:
         self.xpos = self.player.position[0]
         step = 0
         while run:
-            reward, end_episode = self.update(action)
             if act == "run":
-                run = False
+                diff = DT
+                if params < DT:
+                    diff =  params 
+                reward, end_episode = self.update(('run', 2.0), diff)
+                params -= diff
+                run = params > 0
             elif act == "jump":
+                reward, end_episode = self.update(action)
                 run = not self.on_platforms()
+                action = None
             if end_episode:
                 run = False
-            action = None
             step += 1
         state = self.get_state()
         return state, reward, end_episode, step
@@ -153,8 +158,8 @@ class Enemy:
         self.position = self.platform.size + self.platform.position
         self.position[0] -= self.size[0]
 
-    def update(self):
-        self.position += vector(self.dx * DT, 0)
+    def update(self, dt):
+        self.position += vector(self.dx * dt, 0)
         if not (0 <= self.position[0] - self.platform.position[0] <= self.platform.size[0] - self.size[0]):
             self.dx *= -1
 
@@ -166,19 +171,20 @@ class Player(Enemy):
         self.position = vector(0, PLATHEIGHT)
         self.velocity = vector(0.0, 0.0)
 
-    def update(self):
+    def update(self, dt):
         ''' Update the position and velocity. '''
-        self.position += self.velocity * DT
+        self.position += self.velocity * dt
 
-    def accelerate(self, accel):
+    def accelerate(self, accel, dt = DT):
         ''' Applies a power to the entity in direction theta. '''
         accel = bound_vector(accel, MAX_ACCEL)
-        self.velocity += accel * DT
+        self.velocity += accel * dt
         self.velocity = bound_vector(self.velocity, MAX_SPEED)
 
-    def run(self, power):
+    def run(self, power, dt):
         self.velocity[0] *= self.decay
-        self.accelerate(vector(power / DT, 0.0))
+        if dt > 0:
+            self.accelerate(vector(power / dt, 0.0), dt)
 
     def jump(self, power):
         self.accelerate(vector(0.0, power / DT))

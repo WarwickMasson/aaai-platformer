@@ -77,16 +77,14 @@ class Agent:
     Implements an agent with a parameterized or weighted policy.
     '''
 
-    action_count = 4
-    temperature = 10.0
+    action_count = 2
+    temperature = 1.0
     variance = 0.1
     gamma = 0.9
-    parameter_features = [enemy_features, gap_features, enemy_features, gap_features]
+    parameter_features = [gap_features, enemy_features]
     parameter_weights = [
-        np.array([2, 0, 0, 0, 0]),
-        np.array([10, 0, 0, 0, 0, 0, 0, 0]),
-        np.array([50, 0, 0, 0, 0]),
-        np.array([25, 0, 0, 0, 0, 0, 0, 0])]
+        np.array([1, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([50, 0, 0, 0, 0])]
 
     def __init__(self):
         self.action_weights = []
@@ -124,7 +122,7 @@ class Agent:
         if action == None:
             action = self.action_policy(state)
         parameters = self.parameter_policy(state, action)
-        action_names = ['run', 'run', 'jump', 'jump']
+        action_names = ['run', 'jump']
         return (action_names[action], parameters)
 
     def action_prob(self, state):
@@ -220,15 +218,16 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.00001
+    alpha = 0.1
     lmb = 0.0
-    action_features = [fourier_basis, fourier_basis, fourier_basis, fourier_basis]
+    action_features = []
 
     def __init__(self):
         ''' Initialize coeffs. '''
         self.action_weights = []
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
+            self.action_features.append(fourier_basis)
 
     def update(self):
         ''' Learn for a single episode. '''

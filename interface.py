@@ -33,7 +33,7 @@ class Interface:
         keys_pressed = pygame.key.get_pressed()
         action_map = {
             pygame.K_SPACE: ('jump', 100),
-            pygame.K_d: ('run', 2),
+            pygame.K_d: ('run', 1),
         }
         action = ('run', 0)
         for key in action_map:
@@ -41,8 +41,7 @@ class Interface:
                 action = action_map[key]
                 break
         states, reward, end_episode, steps = self.simulator.take_action(action)
-        if action[0] != 'run':
-            print reward
+        print states[0]
         if end_episode:
             self.simulator = Simulator()
 
