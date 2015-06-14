@@ -27,7 +27,7 @@ PLATHEIGHT = 40.0
 MIN_GAP = 150.0
 MAX_GAP = 200.0
 HEIGHT_DIFF = 50.0
-MAX_WIDTH = 100000.0
+MAX_WIDTH = 2000.0
 DT = 0.05
 MAX_ACCEL = 50.0 / DT
 MAX_SPEED = 50.0 / DT
@@ -100,11 +100,12 @@ class Simulator:
     def terminal_check(self, reward = 0.0):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = self.player.position[1] < self.lower_bound()
-        right = self.player.position[0] > self.right_bound()
+        right = self.player.position[0] >= self.right_bound()
         for entity in [self.enemy1, self.enemy2]:
             if self.player.colliding(entity):
                 end_episode = True
         if right:
+            reward = (self.right_bound() - self.xpos) / self.right_bound()
             end_episode = True
         return reward, end_episode
 
@@ -120,7 +121,7 @@ class Simulator:
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
-        reward = self.player.position[0] - self.xpos
+        reward = (self.player.position[0] - self.xpos) / self.right_bound()
         return self.terminal_check(reward)
 
     def take_action(self, action):

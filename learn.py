@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 7
+FOURIER_DIM = 6
 def generate_coefficients(coeffs, vector = np.zeros((13,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
     if depth == vector.size or count == 2:
@@ -66,6 +66,9 @@ def fourier_basis(state):
         basis[i] = np.cos(coeff.dot(scaled))
     return basis
 
+def position_basis(state):
+    return np.array([1, state[0]])
+
 def enemy_features(state):
     return np.array([1, state[0], state[1], state[7], state[8]])
 
@@ -83,7 +86,7 @@ class Agent:
     gamma = 0.9
     parameter_features = [gap_features, enemy_features]
     parameter_weights = [
-        np.array([1, 0, 0, 0, 0, 0, 0, 0]),
+        np.array([2, 0, 0, 0, 0, 0, 0, 0]),
         np.array([50, 0, 0, 0, 0])]
 
     def __init__(self):
@@ -212,13 +215,22 @@ class Agent:
             print 'Step:', step, sum(rets), total / (step + 1)
         return returns
 
+class HardcodedAgent(Agent):
+
+    def action_policy(self, state):
+        ''' Selects an action based on action probabilities. '''
+        if state[0] == 0:
+            return 0
+        else:
+            return 1
+
 class FixedSarsaAgent(Agent):
     ''' A fixed parameter weight gradient-descent SARSA agent. '''
 
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.1
+    alpha = 0.001
     lmb = 0.0
     action_features = []
 
@@ -246,7 +258,7 @@ class FixedSarsaAgent(Agent):
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
-            delta = reward + (self.gamma ** step) * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
+            delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
@@ -488,7 +500,7 @@ class EnacAgent(QpamdpAgent):
         for step in range(steps):
             new_ret = self.parameter_update()
             print new_ret
-            returns.append(sum(new_ret))
+            returns.extend(new_ret)
             print step
         return returns
 
