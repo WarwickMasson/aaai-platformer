@@ -27,9 +27,11 @@ def weighted_selection(values):
     return 0
 
 FOURIER_DIM = 6
-def generate_coefficients(coeffs, vector = np.zeros((13,)), depth = 0, count = 0):
+COUPLING = 2
+STATE_DIM = Simulator().get_state().size
+def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
-    if depth == vector.size or count == 2:
+    if depth == vector.size or count == COUPLING:
         coeffs.append(vector)
     else:
         for j in range(FOURIER_DIM):
