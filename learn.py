@@ -31,7 +31,7 @@ COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
     ''' Generate all coefficient vectors. '''
-    if depth == vector.size or count == COUPLING:
+    if depth == STATE_DIM or count == COUPLING:
         coeffs.append(vector)
     else:
         for j in range(FOURIER_DIM):
@@ -66,6 +66,14 @@ def fourier_basis(state):
     scaled = scale_state(state)
     for i, coeff in enumerate(COEFFS):
         basis[i] = np.cos(coeff.dot(scaled))
+    return basis
+
+def polynomial_basis(state):
+    basis = np.zeros((BASIS_COUNT,))
+    scaled = scale_state(state)
+    for i, coeff in enumerate(COEFFS):
+        basis[i] = coeff.dot(scaled)
+    basis[0] = 1.0
     return basis
 
 def position_basis(state):
@@ -254,6 +262,7 @@ class FixedSarsaAgent(Agent):
         traces = []
         for i in range(self.action_count):
             traces.append(np.zeros((BASIS_COUNT,)))
+            print self.action_weights[i].dot(feat)
         while not end_episode:
             action = self.policy(state, act)
             state, reward, end_episode, step = simulator.take_action(action)
