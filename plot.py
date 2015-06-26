@@ -152,3 +152,24 @@ def print_policy(agent, run):
         print agent.action_weights
         print agent.parameter_weights
         print agent.alpha
+
+def plot_value_functions(agent, run):
+    with file('./runs/'+agent.name+'/'+str(run)+'.obj', 'r') as file_handle:
+        agent = pickle.load(file_handle)
+        state0 = simulator.Simulator().get_state()
+        values, qval1, qval2 = [], [], []
+        val = agent.action_weights[0]
+        for x in range(1000):
+            state0[0] = x
+            values.append(agent.value_function(state0))
+            feat = agent.action_features[0](state0)
+            qval1.append(agent.action_weights[0].dot(feat))
+            qval2.append(agent.action_weights[1].dot(feat))
+        plt.plot(values, '-b', label = '$V(s)$')
+        plt.plot(qval1, '-r', label = '$Q(s, a_1)$')
+        plt.plot(qval2, '-g', label = '$Q(s, a_2)$')
+        plt.axis([0, 1000, -2, 2])
+        plt.legend(loc = 'lower right')
+        plt.xlabel('$x$')
+        plt.ylabel('$V$')
+        plt.savefig('./runs/value_function', bbox_inches='tight')

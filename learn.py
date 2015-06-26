@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 6
+FOURIER_DIM = 10
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
@@ -39,7 +39,7 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0]) 
+SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
 SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0, MAX_WIDTH, 40.0,
 MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_WIDTH])
 COEFFS = []
@@ -91,7 +91,7 @@ class Agent:
     '''
 
     action_count = 2
-    temperature = 1.0
+    temperature = 0.1
     variance = 0.1
     gamma = 0.9
     parameter_features = [gap_features, enemy_features]
@@ -122,6 +122,14 @@ class Agent:
             acts.append(act)
         return states, actions, rewards, acts
 
+    def value_function(self, state):
+        value = 0
+        action_prob = self.action_prob(state)
+        for act in range(self.action_count):
+            feat = self.action_features[act](state)
+            value += action_prob[act] * self.action_weights[act].dot(feat)
+        return value
+
     def evaluate_policy(self, runs):
         ''' Evaluate the current policy. '''
         average_reward = 0
@@ -129,6 +137,35 @@ class Agent:
             rewards = self.run_episode()[2]
             average_reward += sum(rewards) / runs
         return average_reward
+
+    def follow_action(self, act):
+        sim = Simulator()
+        action = self.policy(sim.get_state(), act)
+        state, reward, end, _ = sim.take_action(action)
+        if end:
+            return reward
+        else:
+            return reward + sum(self.run_episode(sim)[2])
+
+    def compare_value_function(self, runs):
+        vf0 = 0.0
+        q1, q2 = 0.0, 0.0
+        ret = 0.0
+        r1, r2 = 0.0, 0.0
+        for i in range(runs):
+            sim = Simulator()
+            state = sim.get_state()
+            vf0 += self.value_function(state) / runs
+            feat = self.action_features[0](state)
+            q1 += self.action_weights[0].dot(feat) / runs
+            q2 += self.action_weights[1].dot(feat) / runs
+            ret += sum(self.run_episode(sim)[2]) / runs
+            r1 += self.follow_action(0) / runs
+            r2 += self.follow_action(1) / runs
+        print "Q:", q1, q2
+        print "V:", vf0
+        print "R:", ret
+        print "RQ:", r1, r2
 
     def policy(self, state, action = None):
         ''' Policy selects an action based on its internal policies. '''
@@ -145,7 +182,8 @@ class Agent:
             features = self.action_features[i](state)
             val = self.action_weights[i].T.dot(features)
             values.append(val / self.temperature)
-        return softmax(values)
+        prob = softmax(values)
+        return prob
 
     def action_policy(self, state):
         ''' Selects an action based on action probabilities. '''
@@ -156,7 +194,7 @@ class Agent:
         ''' Computes the parameters for the given action. '''
         features = self.parameter_features[action](state)
         weights = self.parameter_weights[action]
-        mean = weights.T.dot(features)
+        mean = weights.dot(features)
         return np.random.normal(mean, self.variance)
 
     def get_parameters(self):
@@ -242,14 +280,13 @@ class FixedSarsaAgent(Agent):
     legend = 'Fixed Sarsa'
     alpha = 0.001
     lmb = 0.0
-    action_features = []
+    action_features = [fourier_basis, fourier_basis]
 
     def __init__(self):
         ''' Initialize coeffs. '''
         self.action_weights = []
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
-            self.action_features.append(fourier_basis)
 
     def update(self):
         ''' Learn for a single episode. '''
@@ -269,7 +306,10 @@ class FixedSarsaAgent(Agent):
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
-            delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
+            if end_episode:
+                delta = reward - self.action_weights[act].dot(feat)
+            else:
+                delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
@@ -391,14 +431,6 @@ class QpamdpAgent(FixedSarsaAgent):
             else:
                 grad = np.append(grad, np.zeros((rows,)))
         return grad
-
-    def value_function(self, state):
-        value = 0
-        action_prob = self.action_prob(state)
-        for act in range(self.action_count):
-            feat = self.action_features[act](state)
-            value += action_prob[act]* self.action_weights[act].dot(feat)
-        return value
 
     def enac_gradient(self):
         ''' Compute the episodic NAC gradient. '''

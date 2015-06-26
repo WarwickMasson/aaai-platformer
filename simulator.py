@@ -21,8 +21,8 @@ def bound_vector(vect, maximum):
     yval = bound(vect[1], -maximum, maximum)
     return vector(xval, yval)
 
-MIN_PLATWIDTH = 200.0
-MAX_PLATWIDTH = 300.0
+MIN_PLATWIDTH = 300.0
+MAX_PLATWIDTH = 400.0
 PLATHEIGHT = 40.0
 MIN_GAP = 150.0
 MAX_GAP = 200.0
@@ -59,19 +59,19 @@ class Simulator:
     def get_state(self):
         ''' Returns the representation of the current state. '''
         state = np.array([
-            self.player.position[0],
-            self.player.velocity[0],
-            self.enemy1.position[0],
-            self.enemy1.dx,
-            self.enemy2.position[0],
-            self.enemy2.dx,
-            self.platform1.size[0],
-            self.platform2.position[0],
-            self.platform2.position[1],
-            self.platform2.size[0],
-            self.platform3.position[0],
-            self.platform3.position[1],
-            self.platform3.size[0]])
+            self.player.position[0],    #0
+            self.player.velocity[0],    #1
+            self.enemy1.position[0],    #2
+            self.enemy1.dx,             #3
+            self.enemy2.position[0],    #4
+            self.enemy2.dx,             #5
+            self.platform1.size[0],     #6
+            self.platform2.position[0], #7
+            self.platform2.position[1], #8
+            self.platform2.size[0],     #9
+            self.platform3.position[0], #10
+            self.platform3.position[1], #11
+            self.platform3.size[0]])    #12
         return state
 
     def on_platforms(self):
