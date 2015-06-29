@@ -39,8 +39,8 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0, MAX_WIDTH, 40.0,
+SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0,
 MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_WIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
@@ -95,8 +95,8 @@ class Agent:
     gamma = 0.9
     parameter_features = [param_features, param_features]
     parameter_weights = [
-        2*np.eye(14, 1)[:, 0],
-        50*np.eye(14, 1)[:, 0]]
+        2*np.eye(STATE_DIM + 1, 1)[:, 0],
+        50*np.eye(STATE_DIM + 1, 1)[:, 0]]
 
     def __init__(self):
         self.action_weights = []

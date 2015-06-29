@@ -63,15 +63,13 @@ class Simulator:
             self.player.velocity[0],    #1
             self.enemy1.position[0],    #2
             self.enemy1.dx,             #3
-            self.enemy2.position[0],    #4
-            self.enemy2.dx,             #5
-            self.platform1.size[0],     #6
-            self.platform2.position[0], #7
-            self.platform2.position[1], #8
-            self.platform2.size[0],     #9
-            self.platform3.position[0], #10
-            self.platform3.position[1], #11
-            self.platform3.size[0]])    #12
+            self.platform1.size[0],     #4
+            self.platform2.position[0], #5
+            self.platform2.position[1], #6
+            self.platform2.size[0],     #7
+            self.platform3.position[0], #8
+            self.platform3.position[1], #9
+            self.platform3.size[0]])    #10
         return state
 
     def on_platforms(self):
@@ -116,7 +114,9 @@ class Simulator:
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
         self.perform_action(action, self.player, dt)
-        for entity in [self.player, self.enemy1, self.enemy2]:
+        if self.player.position[0] > self.platform2.position[0]:
+            self.enemy1, self.enemy2 = self.enemy2, self.enemy1
+        for entity in [self.player, self.enemy1]:
             entity.update(dt)
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
