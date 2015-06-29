@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 10
+FOURIER_DIM = 7
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
@@ -79,11 +79,10 @@ def polynomial_basis(state):
 def position_basis(state):
     return np.array([1, state[0]])
 
-def enemy_features(state):
-    return np.array([1, state[0], state[1], state[7], state[8]])
-
-def gap_features(state):
-    return np.array([1, state[0], state[1], state[2], state[3], state[4], state[5], state[6]])
+def param_features(state):
+    array = np.ones(state.size + 1)
+    array[1:] = scale_state(state)
+    return array
 
 class Agent:
     '''
@@ -94,10 +93,10 @@ class Agent:
     temperature = 0.1
     variance = 0.1
     gamma = 0.9
-    parameter_features = [gap_features, enemy_features]
+    parameter_features = [param_features, param_features]
     parameter_weights = [
-        np.array([2, 0, 0, 0, 0, 0, 0, 0]),
-        np.array([50, 0, 0, 0, 0])]
+        2*np.eye(14, 1)[:, 0],
+        50*np.eye(14, 1)[:, 0]]
 
     def __init__(self):
         self.action_weights = []
@@ -278,8 +277,8 @@ class FixedSarsaAgent(Agent):
     name = 'fixedsarsa'
     colour = 'b'
     legend = 'Fixed Sarsa'
-    alpha = 0.001
-    lmb = 0.0
+    alpha = 0.01
+    lmb = 0.1
     action_features = [fourier_basis, fourier_basis]
 
     def __init__(self):
@@ -403,7 +402,8 @@ class QpamdpAgent(FixedSarsaAgent):
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 1.0
+    beta = 2.0
+    qsteps = 2000
 
     def get_parameters(self):
         ''' Get the parameter weights. '''
@@ -432,13 +432,19 @@ class QpamdpAgent(FixedSarsaAgent):
                 grad = np.append(grad, np.zeros((rows,)))
         return grad
 
+    def initial_features(self, state):
+        state = scale_state(state)
+        variables = np.array([state[3], state[5], state[6], state[7], state[8], state[9], state[10], state[11], state[12]])
+        feat = np.append([1], variables)
+        feat = np.append(feat, variables**2)
+        return feat
+
     def enac_gradient(self):
         ''' Compute the episodic NAC gradient. '''
         returns = np.zeros((self.runs, 1))
-        phi = lambda state: np.array([1, state[2], state[3], state[4], state[5], state[6], state[2]**2, state[3]**2,
-            state[4]**2, state[5]**2, state[6]**2])
         param_size = self.get_parameters().size
-        psi = np.zeros((self.runs, param_size+11))
+        feat_size = self.initial_features(np.zeros((STATE_DIM,))).size
+        psi = np.zeros((self.runs, param_size+feat_size))
         for run in range(self.runs):
             states, actions, rewards, acts = self.run_episode()
             returns[run, 0] = sum(rewards)
@@ -446,7 +452,7 @@ class QpamdpAgent(FixedSarsaAgent):
             for state, act, action in zip(states, acts, actions):
                 val = action[1]
                 log_grad += self.log_gradient(state, act, val)
-            psi[run, :] = np.append(log_grad, phi(states[0]))
+            psi[run, :] = np.append(log_grad, self.initial_features(states[0]))
         omega_v = np.linalg.pinv(psi).dot(returns)
         grad = omega_v[0:param_size, 0]
         return grad, returns
@@ -462,7 +468,7 @@ class QpamdpAgent(FixedSarsaAgent):
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
-        for step in range(500):
+        for step in range(self.qsteps):
             new_ret = self.update()
             returns.append(sum(new_ret))
         for step in range(steps):
@@ -482,19 +488,23 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
+    gradsteps = 100
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
+        total = 0.0
         for step in range(steps):
-            for i in range(500):
+            for i in range(self.qstep):
                 new_ret = self.update()
-                print i, sum(new_ret)
+                total += sum(new_ret)
                 returns.append(sum(new_ret))
-            for i in range(0):
+                print i, total / len(returns)
+            for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
-                print step, i, sum(new_ret) / len(new_ret)
+                total += sum(new_ret)
+                print step, i, total / len(returns)
         return returns
 
 class EnacAgent(QpamdpAgent):
@@ -593,3 +603,24 @@ def random_sample():
         rets = agent.learn(0)
         print i, sum(rets) / 500
         print agent.get_parameters()
+
+def gradient_variance():
+    agent = QpamdpAgent()
+    fd = open('./runs/qpamdp/999.obj', 'r')
+    agent = pickle.load(fd)
+    grads = []
+    for i in range(20):
+        grad = agent.enac_gradient()[0]
+        grad /= norm(grad)
+        grads.append(grad)
+        print grad
+    print
+    mean = np.mean(grads, 0)
+    print 'Mean:'
+    print mean
+    var = np.var(grads, 0)
+    print 'Var:'
+    print var
+    print 'Relative Var:'
+    print mean / var
+    print 'Norm Var:', norm(var)

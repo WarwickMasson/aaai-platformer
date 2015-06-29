@@ -9,7 +9,7 @@ import sys
 from util import vector_to_tuple, vector
 
 WIDTH = 300
-LENGTH = 750
+LENGTH = 1000
 
 class Interface:
     ''' Implements a pygame interface that allows keyboard control
@@ -40,8 +40,7 @@ class Interface:
             if keys_pressed[key]:
                 action = action_map[key]
                 break
-        states, reward, end_episode, steps = self.simulator.take_action(action)
-        print states[0]
+        reward, end_episode = self.simulator.update(action, DT)
         if end_episode:
             self.simulator = Simulator()
 
