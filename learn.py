@@ -40,7 +40,7 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
 SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -55,7 +55,7 @@ def scale_state(state):
     scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
     for i in range(scaled.size):
         if not 0 <= scaled[i] <= 1:
-            print i, scaled[i]
+            print i, scaled[i], new_state[i]
             assert(1 == 0)
     return scaled
 
@@ -263,8 +263,12 @@ class Agent:
 
 class HardcodedAgent(Agent):
 
+    name = 'hardcoded'
+    legend = 'Hardcoded Agent'
+    colour = 'k'
+
     def action_policy(self, state):
-        ''' Selects an action based on action probabilities. '''
+        ''' Selects an action. '''
         if state[0] == 0:
             return 0
         else:
