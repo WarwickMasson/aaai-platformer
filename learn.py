@@ -26,7 +26,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 7
+FOURIER_DIM = 10
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
@@ -39,9 +39,8 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0,
-MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_WIDTH])
+SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH, 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -434,7 +433,7 @@ class QpamdpAgent(FixedSarsaAgent):
 
     def initial_features(self, state):
         state = scale_state(state)
-        variables = np.array([state[3], state[5], state[6], state[7], state[8], state[9], state[10], state[11], state[12]])
+        variables = np.array([state[5], state[6], state[7], state[8]])
         feat = np.append([1], variables)
         feat = np.append(feat, variables**2)
         return feat

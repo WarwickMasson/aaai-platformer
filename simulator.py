@@ -58,18 +58,22 @@ class Simulator:
 
     def get_state(self):
         ''' Returns the representation of the current state. '''
+        if self.player.position[0] > self.platform2.position[0]:
+            plat1 = self.platform2
+            plat2 = self.platform3
+        else:
+            plat1 = self.platform1
+            plat2 = self.platform2
         state = np.array([
             self.player.position[0],    #0
             self.player.velocity[0],    #1
             self.enemy1.position[0],    #2
             self.enemy1.dx,             #3
-            self.platform1.size[0],     #4
-            self.platform2.position[0], #5
-            self.platform2.position[1], #6
-            self.platform2.size[0],     #7
-            self.platform3.position[0], #8
-            self.platform3.position[1], #9
-            self.platform3.size[0]])    #10
+            plat1.position[0],          #4
+            plat1.size[0],              #5
+            plat2.position[0],          #6
+            plat2.position[1],          #7
+            plat2.size[0]])             #8
         return state
 
     def on_platforms(self):
