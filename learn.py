@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, MAX_GAP, HEIGHT_DIFF
-from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy
+from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy, Player
 from random import choice
 from util import to_matrix
 
@@ -43,7 +43,7 @@ SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_SPEED, MAX_WIDTH + Enem
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
-print BASIS_COUNT
+print "Basis Functions:", BASIS_COUNT
 COEFF_SCALE = np.ones(BASIS_COUNT)
 for i in range(1, BASIS_COUNT):
     COEFF_SCALE[i] = norm(COEFFS[i])
@@ -82,22 +82,30 @@ def param_features(state):
     array[1:] = scale_state(state)
     return array
 
-class Agent:
+class FixedSarsaAgent:
     '''
-    Implements an agent with a parameterized or weighted policy.
+    Implements a fixed parameter weight gradient-descent SARSA agent.
     '''
 
+    name = 'fixedsarsa'
+    legend = 'Fixed Sarsa'
+    colour = 'r'
     action_count = 2
+    alpha = 0.01
+    lmb = 0.1
+    gamma = 0.9
     temperature = 0.1
     variance = 0.1
-    gamma = 0.9
     parameter_features = [param_features, param_features]
+    action_features = [fourier_basis, fourier_basis]
 
     def __init__(self):
         self.action_weights = []
         self.parameter_weights = [
             2*np.eye(STATE_DIM + 1, 1)[:, 0],
             50*np.eye(STATE_DIM + 1, 1)[:, 0]]
+        for _ in range(self.action_count):
+            self.action_weights.append(np.zeros((BASIS_COUNT,)))
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -246,51 +254,6 @@ class Agent:
         return grad
 
     def update(self):
-        ''' Perform one learning update. '''
-        pass
-
-    def learn(self, steps):
-        ''' Learn for the given number of update steps. '''
-        returns = []
-        total = 0.0
-        for step in range(steps):
-            rets = self.update()
-            returns.append(sum(rets))
-            total += sum(rets)
-            print 'Step:', step, sum(rets), total / (step + 1)
-        return returns
-
-class HardcodedAgent(Agent):
-
-    name = 'hardcoded'
-    legend = 'Hardcoded Agent'
-    colour = 'k'
-
-    def action_policy(self, state):
-        ''' Selects an action. '''
-        if state[0] == 0:
-            return 0
-        else:
-            return 1
-
-class FixedSarsaAgent(Agent):
-    ''' A fixed parameter weight gradient-descent SARSA agent. '''
-
-    name = 'fixedsarsa'
-    colour = 'r'
-    legend = 'Fixed Sarsa'
-    alpha = 0.01
-    lmb = 0.1
-    action_features = [fourier_basis, fourier_basis]
-
-    def __init__(self):
-        ''' Initialize coeffs. '''
-        Agent.__init__(self)
-        self.action_weights = []
-        for _ in range(self.action_count):
-            self.action_weights.append(np.zeros((BASIS_COUNT,)))
-
-    def update(self):
         ''' Learn for a single episode. '''
         simulator = Simulator()
         state = simulator.get_state()
@@ -320,6 +283,30 @@ class FixedSarsaAgent(Agent):
             act = new_act
             feat = new_feat
         return rewards
+
+    def learn(self, steps):
+        ''' Learn for the given number of update steps. '''
+        returns = []
+        total = 0.0
+        for step in range(steps):
+            rets = self.update()
+            returns.append(sum(rets))
+            total += sum(rets)
+            print 'Step:', step, sum(rets), total / (step + 1)
+        return returns
+
+class HardcodedAgent(FixedSarsaAgent):
+
+    name = 'hardcoded'
+    legend = 'Hardcoded Agent'
+    colour = 'k'
+
+    def action_policy(self, state):
+        ''' Selects an action. '''
+        if state[0] == 0:
+            return 0
+        else:
+            return 1
 
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agen to optimize H(theta) using eNAC. '''
