@@ -8,7 +8,6 @@ from simulator import Simulator, MAX_WIDTH, MAX_GAP, HEIGHT_DIFF
 from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy
 from random import choice
 from util import to_matrix
-import cma
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -321,82 +320,6 @@ class FixedSarsaAgent(Agent):
             act = new_act
             feat = new_feat
         return rewards
-
-class CmaesAgent(Agent):
-    ''' Defines a CMA-ES agent. '''
-
-    colour = 'r'
-    legend = 'CMA-ES'
-    name = 'cmaes'
-    runs = 5
-    sigma = 0.1
-
-    def objective_function(self, container, parameters):
-        ''' Defines a simple objective function for direct optimization. '''
-        self.set_parameters(parameters)
-        total = 0
-        for _ in range(self.runs):
-            reward = self.evaluate_policy(1)
-            total -= reward / self.runs
-            container.append(reward)
-        return total
-
-    def learn(self, _):
-        ''' Learn until convergence. '''
-        returns = []
-        function = lambda parameters: self.objective_function(returns, parameters)
-        res = cma.fmin(function, self.get_parameters(), self.sigma)
-        self.set_parameters(res[5])
-        return returns
-
-class AlternatingAgent(FixedSarsaAgent):
-    ''' Alternates learning using Sarsa and Cmaes. '''
-
-    colour = 'b'
-    legend = 'Alternating Optimization'
-    name = 'ao'
-    qsteps = 1000
-    runs = 5
-    sigma = 0.1
-
-    def objective_function(self, container, parameters):
-        ''' Defines a simple objective function for direct optimization. '''
-        self.set_parameters(parameters)
-        total = 0
-        for _ in range(self.runs):
-            reward = self.evaluate_policy(1)
-            total -= reward / self.runs
-            container.append(reward)
-        return total
-
-    def get_parameters(self):
-        ''' Get the parameter weights. '''
-        parameters = np.zeros((0,))
-        for action in range(self.action_count):
-            parameters = np.append(parameters, self.parameter_weights[action])
-        return parameters
-
-    def set_parameters(self, parameters):
-        ''' Set the parameters using a vector. '''
-        index = 0
-        for action in range(self.action_count):
-            rows = self.parameter_weights[action].size
-            self.parameter_weights[action] = parameters[index: index+rows]
-            index += rows
-
-    def learn(self, steps):
-        ''' Learn for a given number of steps. '''
-        returns = []
-        function = lambda parameters: self.objective_function(returns, parameters)
-        for step in range(steps):
-            agent = FixedSarsaAgent()
-            agent.action_weights = self.action_weights
-            agent.parameter_weights = self.parameter_weights
-            rets = agent.learn(self.qsteps)
-            returns.append(sum(rets))
-            res = cma.fmin(function, self.get_parameters(), self.sigma)
-            self.set_parameters(res[5])
-        return returns
 
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agen to optimize H(theta) using eNAC. '''
