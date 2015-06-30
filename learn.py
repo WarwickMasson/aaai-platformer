@@ -39,8 +39,8 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SHIFT_VECTOR = np.array([0.0, 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH, MAX_SPEED, MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
+SHIFT_VECTOR = np.array([Player.size[0], 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_SPEED, MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
 COEFFS = []
 generate_coefficients(COEFFS)
 BASIS_COUNT = len(COEFFS)
@@ -93,12 +93,12 @@ class Agent:
     variance = 0.1
     gamma = 0.9
     parameter_features = [param_features, param_features]
-    parameter_weights = [
-        2*np.eye(STATE_DIM + 1, 1)[:, 0],
-        50*np.eye(STATE_DIM + 1, 1)[:, 0]]
 
     def __init__(self):
         self.action_weights = []
+        self.parameter_weights = [
+            2*np.eye(STATE_DIM + 1, 1)[:, 0],
+            50*np.eye(STATE_DIM + 1, 1)[:, 0]]
 
     def run_episode(self, simulator = None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -278,7 +278,7 @@ class FixedSarsaAgent(Agent):
     ''' A fixed parameter weight gradient-descent SARSA agent. '''
 
     name = 'fixedsarsa'
-    colour = 'b'
+    colour = 'r'
     legend = 'Fixed Sarsa'
     alpha = 0.01
     lmb = 0.1
@@ -286,6 +286,7 @@ class FixedSarsaAgent(Agent):
 
     def __init__(self):
         ''' Initialize coeffs. '''
+        Agent.__init__(self)
         self.action_weights = []
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
@@ -401,11 +402,11 @@ class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agen to optimize H(theta) using eNAC. '''
 
     relearn = 100
-    runs = 100
+    runs = 50
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 2.0
+    beta = 1.0
     qsteps = 2000
 
     def get_parameters(self):
@@ -491,14 +492,14 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
-    gradsteps = 100
+    gradsteps = 200
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
         total = 0.0
         for step in range(steps):
-            for i in range(self.qstep):
+            for i in range(self.qsteps):
                 new_ret = self.update()
                 total += sum(new_ret)
                 returns.append(sum(new_ret))
