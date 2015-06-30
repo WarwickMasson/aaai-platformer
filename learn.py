@@ -202,57 +202,6 @@ class FixedSarsaAgent:
         mean = weights.dot(features)
         return np.random.normal(mean, self.variance)
 
-    def get_parameters(self):
-        ''' Returns all the parameters in a vector. '''
-        parameters = np.zeros((0,))
-        for action in range(self.action_count):
-            parameters = np.append(parameters, self.action_weights[action])
-            parameters = np.append(parameters, self.parameter_weights[action])
-        return parameters
-
-    def set_parameters(self, parameters):
-        ''' Set the parameters using a vector. '''
-        index = 0
-        for action in range(self.action_count):
-            size = self.action_weights[action].size
-            self.action_weights[action] = parameters[index: index+size]
-            index += size
-            rows = self.parameter_weights[action].size
-            self.parameter_weights[action] = parameters[index: index+rows]
-            index += rows
-
-    def log_action_gradient(self, state, action, selection):
-        ''' Returns the log gradient for action,
-            given the state and the selection used. '''
-        features = self.action_features[action](state)
-        prob = self.action_prob(state)[action]
-        if action == selection:
-            return (1 - prob)*features / self.temperature
-        else:
-            return - prob * features / self.temperature
-
-    def log_parameter_gradient(self, state, action, value):
-        ''' Returns the log gradient for the parameter,
-            given the state and the value. '''
-        features = self.parameter_features[action](state)
-        mean = self.parameter_weights[action].dot(features)
-        grad = (value - mean) * features / self.variance
-        return grad
-
-    def log_gradient(self, state, action, value):
-        ''' Returns the log gradient for the entire policy. '''
-        grad = np.zeros((0,))
-        for i in range(self.action_count):
-            action_grad = self.log_action_gradient(state, i, action)
-            grad = np.append(grad, action_grad)
-            rows = self.parameter_weights[i].size
-            if i == action:
-                parameter_grad = self.log_parameter_gradient(state, i, value)
-                grad = np.append(grad, parameter_grad)
-            else:
-                grad = np.append(grad, np.zeros((rows,)))
-        return grad
-
     def update(self):
         ''' Learn for a single episode. '''
         simulator = Simulator()
@@ -264,7 +213,6 @@ class FixedSarsaAgent:
         traces = []
         for i in range(self.action_count):
             traces.append(np.zeros((BASIS_COUNT,)))
-            print self.action_weights[i].dot(feat)
         while not end_episode:
             action = self.policy(state, act)
             state, reward, end_episode, step = simulator.take_action(action)
@@ -292,7 +240,7 @@ class FixedSarsaAgent:
             rets = self.update()
             returns.append(sum(rets))
             total += sum(rets)
-            print 'Step:', step, sum(rets), total / (step + 1)
+            print 'Sarsa-Step:', step, 'R:', total / (step + 1)
         return returns
 
 class HardcodedAgent(FixedSarsaAgent):
@@ -318,11 +266,14 @@ class QpamdpAgent(FixedSarsaAgent):
     colour = 'g'
     beta = 1.0
     qsteps = 2000
+    opt_omega = False
 
     def get_parameters(self):
-        ''' Get the parameter weights. '''
+        ''' Returns all the parameters in a vector. '''
         parameters = np.zeros((0,))
         for action in range(self.action_count):
+            if self.opt_omega:
+                parameters = np.append(parameters, self.action_weights[action])
             parameters = np.append(parameters, self.parameter_weights[action])
         return parameters
 
@@ -330,14 +281,39 @@ class QpamdpAgent(FixedSarsaAgent):
         ''' Set the parameters using a vector. '''
         index = 0
         for action in range(self.action_count):
+            if self.opt_omega:
+                size = self.action_weights[action].size
+                self.action_weights[action] = parameters[index: index+size]
+                index += size
             rows = self.parameter_weights[action].size
             self.parameter_weights[action] = parameters[index: index+rows]
             index += rows
+
+    def log_action_gradient(self, state, action, selection):
+        ''' Returns the log gradient for action,
+            given the state and the selection used. '''
+        features = self.action_features[action](state)
+        prob = self.action_prob(state)[action]
+        if action == selection:
+            return (1 - prob)*features / self.temperature
+        else:
+            return - prob * features / self.temperature
+
+    def log_parameter_gradient(self, state, action, value):
+        ''' Returns the log gradient for the parameter,
+            given the state and the value. '''
+        features = self.parameter_features[action](state)
+        mean = self.parameter_weights[action].dot(features)
+        grad = (value - mean) * features / self.variance
+        return grad
 
     def log_gradient(self, state, action, value):
         ''' Returns the log gradient for the entire policy. '''
         grad = np.zeros((0,))
         for i in range(self.action_count):
+            if self.opt_omega:
+                action_grad = self.log_action_gradient(state, i, action)
+                grad = np.append(grad, action_grad)
             rows = self.parameter_weights[i].size
             if i == action:
                 parameter_grad = self.log_parameter_gradient(state, i, value)
@@ -377,23 +353,25 @@ class QpamdpAgent(FixedSarsaAgent):
         if norm(grad) > 0:
             grad /= norm(grad)
         self.set_parameters(self.get_parameters() + self.beta * grad)
-        return returns
+        return returns[0]
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
+        total = 0.0
         for step in range(self.qsteps):
             new_ret = self.update()
+            total += sum(new_ret)
             returns.append(sum(new_ret))
+            print 'Sarsa-Step:', step, 'R:', total / len(returns)
         for step in range(steps):
             new_ret = self.parameter_update()
-            print sum(new_ret) / self.runs
+            total += sum(new_ret)
             returns.extend(new_ret)
+            print 'Qpamdp-Step:', step, 'R:', total / len(returns)
             for update in range(self.relearn):
                 new_ret = self.update()
-                print sum(new_ret)
                 returns.append(sum(new_ret))
-            print step
         return returns
 
 class EnacAoAgent(QpamdpAgent):
@@ -413,12 +391,12 @@ class EnacAoAgent(QpamdpAgent):
                 new_ret = self.update()
                 total += sum(new_ret)
                 returns.append(sum(new_ret))
-                print i, total / len(returns)
+                print 'Iteration:', step, 'Sarsa-Step:', i, 'R:', total / len(returns)
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
                 total += sum(new_ret)
-                print step, i, total / len(returns)
+                print 'Iteration:', step, 'eNAC-Step:', i, 'R:', total / len(returns)
         return returns
 
 class EnacAgent(QpamdpAgent):
@@ -427,48 +405,17 @@ class EnacAgent(QpamdpAgent):
     name = 'enac'
     legend = 'eNAC'
     colour = 'r'
-
-    def get_parameters(self):
-        ''' Returns all the parameters in a vector. '''
-        parameters = np.zeros((0,))
-        for action in range(self.action_count):
-            parameters = np.append(parameters, self.action_weights[action])
-            parameters = np.append(parameters, self.parameter_weights[action])
-        return parameters
-
-    def set_parameters(self, parameters):
-        ''' Set the parameters using a vector. '''
-        index = 0
-        for action in range(self.action_count):
-            size = self.action_weights[action].size
-            self.action_weights[action] = parameters[index: index+size]
-            index += size
-            rows = self.parameter_weights[action].size
-            self.parameter_weights[action] = parameters[index: index+rows]
-            index += rows
-
-    def log_gradient(self, state, action, value):
-        ''' Returns the log gradient for the entire policy. '''
-        grad = np.zeros((0,))
-        for i in range(self.action_count):
-            action_grad = self.log_action_gradient(state, i, action)
-            grad = np.append(grad, action_grad)
-            rows = self.parameter_weights[i].size
-            if i == action:
-                parameter_grad = self.log_parameter_gradient(state, i, value)
-                grad = np.append(grad, parameter_grad)
-            else:
-                grad = np.append(grad, np.zeros((rows,)))
-        return grad
+    opt_omega = True
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         returns = []
+        total = 0.0
         for step in range(steps):
             new_ret = self.parameter_update()
-            print new_ret
+            total += sum(new_ret)
             returns.extend(new_ret)
-            print step
+            print 'eNAC-step:', step, 'R:', total / len(returns)
         return returns
 
 def determine_variance(agent, steps, runs = 1):
