@@ -14,11 +14,3 @@ def vector_to_tuple(vect):
 def to_matrix(vect):
     ''' Turns a vector into a single column matrix. '''
     return np.array([vect]).T
-
-def get_agent(agent, run):
-    ''' Returns a file descriptor for the given run of the agent. '''
-    return file('./runs/'+agent.name +'/'+str(run)+'.obj', 'r')
-
-def put_agent(agent, run):
-    ''' Returns a file descriptor for the given run of the agent. '''
-    return file('./runs/'+agent.name +'/'+str(run)+'.obj', 'w')

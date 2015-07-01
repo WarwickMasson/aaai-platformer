@@ -6,7 +6,6 @@ import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF
 from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy, Player
-from util import get_agent
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -96,6 +95,12 @@ def initial_features(state):
     feat = np.append(feat, variables**2)
     return feat
 
+def load(agent_class, run):
+    ''' Load the given class. '''
+    agent = agent_class(run)
+    agent.load()
+    return agent
+
 class FixedSarsaAgent:
     '''
     Implements a fixed parameter weight gradient-descent SARSA agent.
@@ -113,7 +118,9 @@ class FixedSarsaAgent:
     parameter_features = [param_features, param_features]
     action_features = [fourier_basis, fourier_basis]
 
-    def __init__(self):
+    def __init__(self, run):
+        self.run = run
+        self.filename = 'runs/' + self.name +'/'+ str(run)
         self.action_weights = []
         self.parameter_weights = [
             2*np.eye(STATE_DIM + 1, 1)[:, 0],
@@ -188,6 +195,16 @@ class FixedSarsaAgent:
         print "V:", vf0
         print "R:", ret
         print "RQ:", ret1, ret2
+
+    def save(self):
+        ''' Save the agent. ''' 
+        with file(self.filename + '.obj', 'w') as file_handle:
+            pickle.dump(self, file_handle)
+
+    def load(self):
+        ''' Load the agent. '''
+        with file(self.filename + '.obj', 'r') as file_handle:
+            self = pickle.load(file_handle)
 
     def policy(self, state, action=None):
         ''' Policy selects an action based on its internal policies. '''
@@ -444,35 +461,32 @@ def determine_variance(agent, steps, runs=1):
 
 def save_run(agent_class, steps, run):
     ''' Save a single run. '''
-    agent = agent_class()
+    agent = agent_class(run)
     returns = np.array(agent.learn(steps))
-    np.save('./runs/'+agent.name+'/'+str(run), returns)
-    with get_agent(agent_class, run) as file_handle:
-        pickle.dump(agent, file_handle)
+    np.save(agent.filename, returns)
+    agent.save()
 
 def extend_run(agent_class, steps, run):
     ''' Extend an existing run for a given number of steps. '''
-    agent = None
-    with get_agent(agent_class, run) as file_handle:
-        agent = pickle.load(file_handle)
-        run_name = './runs/'+agent.name+'/'+str(run)+'.npy'
-        returns = np.load(run_name)
-        returns = np.append(returns, agent.learn(steps))
-        np.save(run_name, returns)
+    agent = agent_class(run) 
+    agent.load()
+    run_name = agent.filename + '.npy'
+    returns = np.load(run_name)
+    returns = np.append(returns, agent.learn(steps))
+    np.save(run_name, returns)
     if agent != None:
-        with put_agent(agent_class, run) as file_handle:
-            pickle.dump(agent, file_handle)
+        agent.save()
 
 def random_sample():
     ''' Randomly tests parameters around the current parameters. '''
-    print 0, sum(QpamdpAgent().learn(0)) / 500
+    print 0, sum(QpamdpAgent().learn(0)) / QpamdpAgent.qsteps
     for i in range(1, 10):
         agent = QpamdpAgent()
         params = agent.get_parameters()
         params += 2*np.random.randn(params.size)
         agent.set_parameters(params)
         rets = agent.learn(0)
-        print i, sum(rets) / 500
+        print i, sum(rets) / QpamdpAgent.qsteps
         print agent.get_parameters()
 
 def gradient_variance():
