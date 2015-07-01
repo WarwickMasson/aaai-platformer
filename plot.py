@@ -196,4 +196,4 @@ def plot_x_dx(agent, run):
             zgrid = zarray.reshape(xgrid.shape)
             print col
             plot.plot_surface(xgrid, ygrid, zgrid, color = col)
-        plt.savefig('./runs/xdx', bbox_inches='tight')
+        plt.savefig('./runs/value_functions/xdx', bbox_inches='tight')

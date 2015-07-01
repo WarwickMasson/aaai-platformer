@@ -259,7 +259,7 @@ class HardcodedAgent(FixedSarsaAgent):
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agen to optimize H(theta) using eNAC. '''
 
-    relearn = 100
+    relearn = 50
     runs = 50
     name = 'qpamdp'
     legend = 'Q-PAMDP'
@@ -353,7 +353,7 @@ class QpamdpAgent(FixedSarsaAgent):
         if norm(grad) > 0:
             grad /= norm(grad)
         self.set_parameters(self.get_parameters() + self.beta * grad)
-        return returns[0]
+        return returns
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
@@ -366,11 +366,12 @@ class QpamdpAgent(FixedSarsaAgent):
             print 'Sarsa-Step:', step, 'R:', total / len(returns)
         for step in range(steps):
             new_ret = self.parameter_update()
-            total += sum(new_ret)
+            total += sum(new_ret)[0]
             returns.extend(new_ret)
             print 'Qpamdp-Step:', step, 'R:', total / len(returns)
             for update in range(self.relearn):
                 new_ret = self.update()
+                total += sum(new_ret)
                 returns.append(sum(new_ret))
         return returns
 
@@ -395,7 +396,7 @@ class EnacAoAgent(QpamdpAgent):
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
 		returns.extend(new_ret)
-                total += sum(new_ret)
+                total += sum(new_ret)[0]
                 print 'Iteration:', step, 'eNAC-Step:', i, 'R:', total / len(returns)
         return returns
 
