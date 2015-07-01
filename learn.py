@@ -115,6 +115,7 @@ class FixedSarsaAgent:
     gamma = 0.9
     temperature = 0.1
     variance = 0.1
+    action_names = ['run', 'jump']
     parameter_features = [param_features, param_features]
     action_features = [fourier_basis, fourier_basis]
 
@@ -206,13 +207,20 @@ class FixedSarsaAgent:
         with file(self.filename + '.obj', 'r') as file_handle:
             self = pickle.load(file_handle)
 
+    def load_runs(self):
+        ''' Load the saved results for the agent. '''
+        return np.load(self.filename + '.npy')
+
+    def save_runs(self, returns):
+        ''' Save the returns. '''
+        np.save(self.filename + '.npy', returns)
+
     def policy(self, state, action=None):
         ''' Policy selects an action based on its internal policies. '''
         if action == None:
             action = self.action_policy(state)
         parameters = self.parameter_policy(state, action)
-        action_names = ['run', 'jump']
-        return (action_names[action], parameters)
+        return (self.action_names[action], parameters)
 
     def action_prob(self, state):
         ''' Computes the probability of selecting each action. '''
@@ -468,14 +476,11 @@ def save_run(agent_class, steps, run):
 
 def extend_run(agent_class, steps, run):
     ''' Extend an existing run for a given number of steps. '''
-    agent = agent_class(run) 
-    agent.load()
-    run_name = agent.filename + '.npy'
-    returns = np.load(run_name)
+    agent = load(agent_class, run) 
+    returns = agent.load_runs()
     returns = np.append(returns, agent.learn(steps))
-    np.save(run_name, returns)
-    if agent != None:
-        agent.save()
+    agent.save_runs(returns)
+    agent.save()
 
 def random_sample():
     ''' Randomly tests parameters around the current parameters. '''
