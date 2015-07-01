@@ -2,11 +2,10 @@
 This file implements a simple pygame interface for the simulator.
 The simulator can be controlled with the keyboard, or updated without controls.
 '''
-import numpy as np
 from simulator import Simulator, DT
 import pygame
 import sys
-from util import vector_to_tuple, vector
+from util import vector
 
 WIDTH = 300
 LENGTH = 1000
@@ -15,7 +14,7 @@ class Interface:
     ''' Implements a pygame interface that allows keyboard control
         of the player, and draws the field, players, and ball. '''
 
-    def __init__(self, simulator = Simulator()):
+    def __init__(self, simulator=Simulator()):
         ''' Sets up the colors, pygame, and screen. '''
         pygame.init()
         size = (LENGTH, WIDTH)
@@ -67,7 +66,7 @@ class Interface:
         self.window.blit(surf, (0, 0))
         pygame.display.update()
 
-    def draw_episode(self, simulator, name, save = False):
+    def draw_episode(self, simulator, name, save=False):
         ''' Draw each state in the simulator into folder name. '''
         lines = ""
         self.simulator = simulator

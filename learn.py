@@ -4,10 +4,9 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, MAX_GAP, HEIGHT_DIFF
+from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF
 from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy, Player
-from random import choice
-from util import to_matrix
+from util import get_agent
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -28,7 +27,7 @@ def weighted_selection(values):
 FOURIER_DIM = 10
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
-def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, count = 0):
+def generate_coefficients(coeffs, vector, depth=0, count=0):
     ''' Generate all coefficient vectors. '''
     if depth == STATE_DIM or count == COUPLING:
         coeffs.append(vector)
@@ -38,15 +37,23 @@ def generate_coefficients(coeffs, vector = np.zeros((STATE_DIM,)), depth = 0, co
             new_vector[depth] = np.pi * j
             generate_coefficients(coeffs, new_vector, depth+1, count + (j > 0))
 
-SHIFT_VECTOR = np.array([Player.size[0], 0.0, Enemy.size[0], 20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_SPEED, MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH, MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
-COEFFS = []
-generate_coefficients(COEFFS)
-BASIS_COUNT = len(COEFFS)
+def get_coeffs():
+    ''' Compute coeffs, scale, count. '''
+    coeffs = []
+    generate_coefficients(coeffs, np.zeros((STATE_DIM,)))
+    count = len(coeffs)
+    scale = np.ones(count)
+    for i in range(1, count):
+        scale[i] = norm(coeffs[i])
+    return coeffs, scale, count
+
+SHIFT_VECTOR = np.array([Player.size[0], 0.0, Enemy.size[0],
+    20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_SPEED,
+    MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH,
+    MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
+COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
-COEFF_SCALE = np.ones(BASIS_COUNT)
-for i in range(1, BASIS_COUNT):
-    COEFF_SCALE[i] = norm(COEFFS[i])
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
@@ -55,7 +62,7 @@ def scale_state(state):
     for i in range(scaled.size):
         if not 0 <= scaled[i] <= 1:
             print i, scaled[i], new_state[i]
-            assert(1 == 0)
+            assert 0 <= scaled[i] <= 1
     return scaled
 
 def fourier_basis(state):
@@ -67,6 +74,7 @@ def fourier_basis(state):
     return basis
 
 def polynomial_basis(state):
+    ''' Defines a polynomial basis using the current COEFFS. '''
     basis = np.zeros((BASIS_COUNT,))
     scaled = scale_state(state)
     for i, coeff in enumerate(COEFFS):
@@ -74,13 +82,19 @@ def polynomial_basis(state):
     basis[0] = 1.0
     return basis
 
-def position_basis(state):
-    return np.array([1, state[0]])
-
 def param_features(state):
+    ''' Defines a simple linear set of state variables. '''
     array = np.ones(state.size + 1)
     array[1:] = scale_state(state)
     return array
+
+def initial_features(state):
+    ''' Computes the initial features phi(s_0) for enac. '''
+    state = scale_state(state)
+    variables = np.array([state[5], state[6], state[7], state[8]])
+    feat = np.append([1], variables)
+    feat = np.append(feat, variables**2)
+    return feat
 
 class FixedSarsaAgent:
     '''
@@ -107,7 +121,7 @@ class FixedSarsaAgent:
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
 
-    def run_episode(self, simulator = None):
+    def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
         if simulator == None:
             simulator = Simulator()
@@ -128,6 +142,7 @@ class FixedSarsaAgent:
         return states, actions, rewards, acts
 
     def value_function(self, state):
+        ''' Computes V(s) = E_a[pi(s,a)Q(s,a)] '''
         value = 0
         action_prob = self.action_prob(state)
         for act in range(self.action_count):
@@ -144,35 +159,37 @@ class FixedSarsaAgent:
         return average_reward
 
     def follow_action(self, act):
+        ''' Computes the expected return after taking action a. '''
         sim = Simulator()
         action = self.policy(sim.get_state(), act)
-        state, reward, end, _ = sim.take_action(action)
+        reward, end = sim.take_action(action)[1:3]
         if end:
             return reward
         else:
             return reward + sum(self.run_episode(sim)[2])
 
     def compare_value_function(self, runs):
+        ''' Compares the value function to the expected rewards. '''
         vf0 = 0.0
-        q1, q2 = 0.0, 0.0
+        quality1, quality2 = 0.0, 0.0
         ret = 0.0
-        r1, r2 = 0.0, 0.0
-        for i in range(runs):
+        ret1, ret2 = 0.0, 0.0
+        for _ in range(runs):
             sim = Simulator()
             state = sim.get_state()
             vf0 += self.value_function(state) / runs
             feat = self.action_features[0](state)
-            q1 += self.action_weights[0].dot(feat) / runs
-            q2 += self.action_weights[1].dot(feat) / runs
+            quality1 += self.action_weights[0].dot(feat) / runs
+            quality2 += self.action_weights[1].dot(feat) / runs
             ret += sum(self.run_episode(sim)[2]) / runs
-            r1 += self.follow_action(0) / runs
-            r2 += self.follow_action(1) / runs
-        print "Q:", q1, q2
+            ret1 += self.follow_action(0) / runs
+            ret2 += self.follow_action(1) / runs
+        print "Q:", quality1, quality2
         print "V:", vf0
         print "R:", ret
-        print "RQ:", r1, r2
+        print "RQ:", ret1, ret2
 
-    def policy(self, state, action = None):
+    def policy(self, state, action=None):
         ''' Policy selects an action based on its internal policies. '''
         if action == None:
             action = self.action_policy(state)
@@ -215,14 +232,13 @@ class FixedSarsaAgent:
             traces.append(np.zeros((BASIS_COUNT,)))
         while not end_episode:
             action = self.policy(state, act)
-            state, reward, end_episode, step = simulator.take_action(action)
+            state, reward, end_episode, _ = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
-            if end_episode:
-                delta = reward - self.action_weights[act].dot(feat)
-            else:
-                delta = reward + self.gamma * self.action_weights[new_act].dot(new_feat) - self.action_weights[act].dot(feat)
+            delta = reward - self.action_weights[act].dot(feat)
+            if not end_episode:
+                delta += self.gamma * self.action_weights[new_act].dot(new_feat)
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
@@ -244,6 +260,7 @@ class FixedSarsaAgent:
         return returns
 
 class HardcodedAgent(FixedSarsaAgent):
+    ''' A hard-coded fixed deterministic policy agent. '''
 
     name = 'hardcoded'
     legend = 'Hardcoded Agent'
@@ -257,7 +274,7 @@ class HardcodedAgent(FixedSarsaAgent):
             return 1
 
 class QpamdpAgent(FixedSarsaAgent):
-    ''' Defines an agen to optimize H(theta) using eNAC. '''
+    ''' Defines an agent to optimize H(theta) using eNAC. '''
 
     relearn = 50
     runs = 50
@@ -322,29 +339,20 @@ class QpamdpAgent(FixedSarsaAgent):
                 grad = np.append(grad, np.zeros((rows,)))
         return grad
 
-    def initial_features(self, state):
-        state = scale_state(state)
-        variables = np.array([state[5], state[6], state[7], state[8]])
-        feat = np.append([1], variables)
-        feat = np.append(feat, variables**2)
-        return feat
-
     def enac_gradient(self):
         ''' Compute the episodic NAC gradient. '''
         returns = np.zeros((self.runs, 1))
         param_size = self.get_parameters().size
-        feat_size = self.initial_features(np.zeros((STATE_DIM,))).size
+        feat_size = initial_features(np.zeros((STATE_DIM,))).size
         psi = np.zeros((self.runs, param_size+feat_size))
         for run in range(self.runs):
             states, actions, rewards, acts = self.run_episode()
             returns[run, 0] = sum(rewards)
             log_grad = np.zeros((param_size,))
             for state, act, action in zip(states, acts, actions):
-                val = action[1]
-                log_grad += self.log_gradient(state, act, val)
-            psi[run, :] = np.append(log_grad, self.initial_features(states[0]))
-        omega_v = np.linalg.pinv(psi).dot(returns)
-        grad = omega_v[0:param_size, 0]
+                log_grad += self.log_gradient(state, act, action[1])
+            psi[run, :] = np.append(log_grad, initial_features(states[0]))
+        grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
         return grad, returns
 
     def parameter_update(self):
@@ -369,7 +377,7 @@ class QpamdpAgent(FixedSarsaAgent):
             total += sum(new_ret)[0]
             returns.extend(new_ret)
             print 'Qpamdp-Step:', step, 'R:', total / len(returns)
-            for update in range(self.relearn):
+            for _ in range(self.relearn):
                 new_ret = self.update()
                 total += sum(new_ret)
                 returns.append(sum(new_ret))
@@ -395,7 +403,7 @@ class EnacAoAgent(QpamdpAgent):
                 print 'Iteration:', step, 'Sarsa-Step:', i, 'R:', total / len(returns)
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
-		returns.extend(new_ret)
+                returns.extend(new_ret)
                 total += sum(new_ret)[0]
                 print 'Iteration:', step, 'eNAC-Step:', i, 'R:', total / len(returns)
         return returns
@@ -414,12 +422,12 @@ class EnacAgent(QpamdpAgent):
         total = 0.0
         for step in range(steps):
             new_ret = self.parameter_update()
-            total += sum(new_ret)
             returns.extend(new_ret)
+            total += sum(new_ret)[0]
             print 'eNAC-step:', step, 'R:', total / len(returns)
         return returns
 
-def determine_variance(agent, steps, runs = 1):
+def determine_variance(agent, steps, runs=1):
     ''' Determine the variance of parameterized policy agent. '''
     rewards = []
     for _ in range(steps):
@@ -439,23 +447,24 @@ def save_run(agent_class, steps, run):
     agent = agent_class()
     returns = np.array(agent.learn(steps))
     np.save('./runs/'+agent.name+'/'+str(run), returns)
-    with file('./runs/'+agent.name+'/'+str(run)+'.obj', 'w') as file_handle:
+    with get_agent(agent_class, run) as file_handle:
         pickle.dump(agent, file_handle)
 
 def extend_run(agent_class, steps, run):
     ''' Extend an existing run for a given number of steps. '''
     agent = None
-    with file('./runs/'+agent_class.name +'/'+str(run)+'.obj', 'r') as file_handle:
+    with get_agent(agent_class, run) as file_handle:
         agent = pickle.load(file_handle)
         run_name = './runs/'+agent.name+'/'+str(run)+'.npy'
         returns = np.load(run_name)
         returns = np.append(returns, agent.learn(steps))
         np.save(run_name, returns)
     if agent != None:
-        with file('./runs/'+agent_class.name +'/'+str(run)+'.obj', 'w') as file_handle:
+        with put_agent(agent_class, run) as file_handle:
             pickle.dump(agent, file_handle)
 
 def random_sample():
+    ''' Randomly tests parameters around the current parameters. '''
     print 0, sum(QpamdpAgent().learn(0)) / 500
     for i in range(1, 10):
         agent = QpamdpAgent()
@@ -467,11 +476,12 @@ def random_sample():
         print agent.get_parameters()
 
 def gradient_variance():
+    ''' Compute the variance of the gradient estimate. '''
     agent = QpamdpAgent()
-    fd = open('./runs/qpamdp/999.obj', 'r')
-    agent = pickle.load(fd)
+    filed = open('./runs/qpamdp/999.obj', 'r')
+    agent = pickle.load(filed)
     grads = []
-    for i in range(20):
+    for _ in range(20):
         grad = agent.enac_gradient()[0]
         grad /= norm(grad)
         grads.append(grad)

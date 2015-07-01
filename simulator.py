@@ -3,7 +3,6 @@ This file implements the platformer rules.
 '''
 import numpy as np
 from numpy.random import uniform
-from numpy.linalg import norm
 from util import vector
 
 def bound(value, lower, upper):
@@ -32,8 +31,8 @@ DT = 0.05
 MAX_ACCEL = 50.0 / DT
 MAX_SPEED = 50.0 / DT
 
-
 class Platform:
+    ''' Represents a fixed platform. '''
 
     def __init__(self, position):
         self.position = position
@@ -49,9 +48,11 @@ class Simulator:
         self.player = Player()
         self.platform1 = Platform(vector(0.0, 0.0))
         self.gap = uniform(MIN_GAP, MAX_GAP)
-        self.platform2 = Platform(vector(self.gap + self.platform1.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
-        gap2 = uniform(MIN_GAP, MAX_GAP)
-        self.platform3 = Platform(self.platform2.position + vector(self.gap + self.platform2.size[0], uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
+        self.platform2 = Platform(vector(self.gap + self.platform1.size[0],
+            uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
+        self.platform3 = Platform(self.platform2.position +
+            vector(self.gap + self.platform2.size[0],
+            uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
         self.states = []
@@ -77,9 +78,13 @@ class Simulator:
         return state
 
     def on_platforms(self):
-        return self.player.on_platform(self.platform1) or self.player.on_platform(self.platform2) or self.player.on_platform(self.platform3)
+        ''' Checks if the player is on any of the platforms. '''
+        for platform in [self.platform1, self.platform2, self.platform3]:
+            if self.player.on_platform(platform):
+                return True
+        return False
 
-    def perform_action(self, action, agent, dt = DT):
+    def perform_action(self, action, dt=DT):
         ''' Applies for selected action for the given agent. '''
         if self.on_platforms():
             if action:
@@ -92,14 +97,15 @@ class Simulator:
             self.player.fall()
 
     def lower_bound(self):
-        ''' Returns the lower bound of the platforms. '''
+        ''' Returns the lowest height of the platforms. '''
         lower = min(self.platform1.position[1], self.platform2.position[1], self.platform3.position[1])
         return lower - self.platform1.size[1]
 
     def right_bound(self):
+        ''' Returns the edge of the game. '''
         return self.platform3.position[0] + self.platform3.size[0]
 
-    def terminal_check(self, reward = 0.0):
+    def terminal_check(self, reward=0.0):
         ''' Determines if the episode is ended, and the reward. '''
         end_episode = self.player.position[1] < self.lower_bound()
         right = self.player.position[0] >= self.right_bound()
@@ -111,13 +117,13 @@ class Simulator:
             end_episode = True
         return reward, end_episode
 
-    def update(self, action, dt = DT):
+    def update(self, action, dt=DT):
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
         self.states.append([self.player.position.copy(),
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
-        self.perform_action(action, self.player, dt)
+        self.perform_action(action, dt)
         if self.player.position[0] > self.platform2.position[0]:
             self.enemy1, self.enemy2 = self.enemy2, self.enemy1
         for entity in [self.player, self.enemy1]:
@@ -139,7 +145,7 @@ class Simulator:
             if act == "run":
                 diff = DT
                 if params < DT:
-                    diff =  params 
+                    diff = params
                 reward, end_episode = self.update(('run', 2.0), diff)
                 params -= diff
                 run = params > 0
@@ -154,25 +160,28 @@ class Simulator:
         return state, reward, end_episode, step
 
 class Enemy:
+    ''' Defines the enemy. '''
 
     size = vector(20.0, 30.0)
 
     def __init__(self, platform):
+        ''' Initializes the enemy on the platform. '''
         self.dx = -20.0
         self.platform = platform
         self.position = self.platform.size + self.platform.position
         self.position[0] -= self.size[0]
 
     def update(self, dt):
+        ''' Shift the enemy along the platform. '''
         self.position += vector(self.dx * dt, 0)
-        if not (0 <= self.position[0] - self.platform.position[0] <= self.platform.size[0] - self.size[0]):
+        if not 0 <= self.position[0] - self.platform.position[0] <= self.platform.size[0] - self.size[0]:
             self.dx *= -1
 
 class Player(Enemy):
-
-    decay = 1.0
+    ''' Represents the player character. '''
 
     def __init__(self):
+        ''' Initialize the position to the starting platform. '''
         self.position = vector(0, PLATHEIGHT)
         self.velocity = vector(0.0, 0.0)
 
@@ -180,21 +189,23 @@ class Player(Enemy):
         ''' Update the position and velocity. '''
         self.position += self.velocity * dt
 
-    def accelerate(self, accel, dt = DT):
+    def accelerate(self, accel, dt=DT):
         ''' Applies a power to the entity in direction theta. '''
         accel = bound_vector(accel, MAX_ACCEL)
         self.velocity += accel * dt
         self.velocity = bound_vector(self.velocity, MAX_SPEED)
 
     def run(self, power, dt):
-        self.velocity[0] *= self.decay
+        ''' Run for a single step. '''
         if dt > 0:
             self.accelerate(vector(power / dt, 0.0), dt)
 
     def jump(self, power):
+        ''' Jump up for a single step. '''
         self.accelerate(vector(0.0, power / DT))
 
     def fall(self):
+        ''' Apply gravity. '''
         self.accelerate(vector(0.0, -9.8))
 
     def decollide(self, other):
@@ -224,9 +235,11 @@ class Player(Enemy):
             self.position[1] = newy
 
     def above_platform(self, platform):
-        return 0.0 <= self.position[0] - platform.position[0] <= platform.size[0]
+        ''' Checks the player is above the platform. '''
+        return 0 <= self.position[0] - platform.position[0] <= platform.size[0]
 
     def on_platform(self, platform):
+        ''' Checks the player is standing on the platform. '''
         ony = self.position[1] - platform.position[1] == platform.size[1]
         return self.above_platform(platform) and ony
 
