@@ -104,7 +104,7 @@ def load(agent_class, run):
 
 def save(agent):
     ''' Save the agent. '''
-    file_handle = file(self.filename + '.obj', 'w')
+    file_handle = file(agent.filename + '.obj', 'w')
     pickle.dump(agent, file_handle)
 
 class FixedSarsaAgent:
