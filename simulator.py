@@ -23,9 +23,9 @@ def bound_vector(vect, maximum):
 MIN_PLATWIDTH = 300.0
 MAX_PLATWIDTH = 400.0
 PLATHEIGHT = 40.0
-MIN_GAP = 150.0
+MIN_GAP = 50.0
 MAX_GAP = 200.0
-HEIGHT_DIFF = 50.0
+HEIGHT_DIFF = 100.0
 MAX_WIDTH = 3*MAX_PLATWIDTH + 2*MAX_GAP
 DT = 0.05
 MAX_ACCEL = 50.0 / DT
@@ -93,6 +93,10 @@ class Simulator:
                     self.player.jump(parameters)
                 elif act == 'run':
                     self.player.run(parameters, dt)
+                elif act == 'leap':
+                    self.player.leap_to(parameters)
+                elif act == 'hop':
+                    self.player.hop_to(parameters)
         else:
             self.player.fall()
 
@@ -149,7 +153,7 @@ class Simulator:
                 reward, end_episode = self.update(('run', 2.0), diff)
                 params -= diff
                 run = params > 0
-            elif act == "jump":
+            elif act in ['jump', 'hop', 'leap']:
                 reward, end_episode = self.update(action)
                 run = not self.on_platforms()
                 action = None
@@ -179,6 +183,7 @@ class Enemy:
 
 class Player(Enemy):
     ''' Represents the player character. '''
+    gravity = 9.8
 
     def __init__(self):
         ''' Initialize the position to the starting platform. '''
@@ -196,7 +201,7 @@ class Player(Enemy):
         self.velocity = bound_vector(self.velocity, MAX_SPEED)
 
     def run(self, power, dt):
-        ''' Run for a single step. '''
+        ''' Run for a given power and time. '''
         if dt > 0:
             self.accelerate(vector(power / dt, 0.0), dt)
 
@@ -204,9 +209,24 @@ class Player(Enemy):
         ''' Jump up for a single step. '''
         self.accelerate(vector(0.0, power / DT))
 
+    def jump_to(self, diffx, dy0):
+        ''' Jump to a specific position. '''
+        time = 2.0 * dy0 / self.gravity + 1.0
+        dx0 = diffx / time - self.velocity[0]
+        dx0 = bound(diffx, 0.0, MAX_ACCEL - dy0)
+        self.accelerate(vector(dx0, dy0) / DT)
+
+    def hop_to(self, diffx):
+        ''' Jump high to a position. '''
+        self.jump_to(diffx, 40.0)
+
+    def leap_to(self, diffx):
+        ''' Jump over a gap. '''
+        self.jump_to(diffx, 25.0)
+
     def fall(self):
         ''' Apply gravity. '''
-        self.accelerate(vector(0.0, -9.8))
+        self.accelerate(vector(0.0, -self.gravity))
 
     def decollide(self, other):
         ''' Shift overlapping entities apart. '''
