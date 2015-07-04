@@ -115,15 +115,15 @@ class FixedSarsaAgent:
     name = 'fixedsarsa'
     legend = 'Fixed Sarsa'
     colour = 'r'
-    action_count = 2
+    action_count = 3
     alpha = 0.01
     lmb = 0.1
     gamma = 0.9
     temperature = 0.1
     variance = 0.1
-    action_names = ['run', 'jump']
-    parameter_features = [param_features, param_features]
-    action_features = [fourier_basis, fourier_basis]
+    action_names = ['run', 'hop', 'leap']
+    parameter_features = [param_features, param_features, param_features]
+    action_features = [fourier_basis, fourier_basis, fourier_basis]
 
     def __init__(self, run):
         self.run = run
@@ -131,6 +131,7 @@ class FixedSarsaAgent:
         self.filename = 'runs/' + self.name +'/'+ str(run)
         self.parameter_weights = [
             2*np.eye(STATE_DIM + 1, 1)[:, 0],
+            *np.eye(STATE_DIM + 1, 1)[:, 0],
             50*np.eye(STATE_DIM + 1, 1)[:, 0]]
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
