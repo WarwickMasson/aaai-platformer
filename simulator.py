@@ -14,10 +14,10 @@ def bound(value, lower, upper):
     else:
         return value
 
-def bound_vector(vect, maximum):
+def bound_vector(vect, xmax, ymax):
     ''' Bounds a vector between a negative and positive maximum range. '''
-    xval = bound(vect[0], -maximum, maximum)
-    yval = bound(vect[1], -maximum, maximum)
+    xval = bound(vect[0], -xmax, xmax)
+    yval = bound(vect[1], -ymax, ymax)
     return vector(xval, yval)
 
 MIN_PLATWIDTH = 300.0
@@ -28,8 +28,10 @@ MAX_GAP = 200.0
 HEIGHT_DIFF = 100.0
 MAX_WIDTH = 3*MAX_PLATWIDTH + 2*MAX_GAP
 DT = 0.05
-MAX_ACCEL = 50.0 / DT
-MAX_SPEED = 50.0 / DT
+MAX_DDX = 20.0 / DT
+MAX_DDY = 50.0 / DT
+MAX_DX = 20.0
+MAX_DY = 50.0
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -196,9 +198,9 @@ class Player(Enemy):
 
     def accelerate(self, accel, dt=DT):
         ''' Applies a power to the entity in direction theta. '''
-        accel = bound_vector(accel, MAX_ACCEL)
+        accel = bound_vector(accel, MAX_DDX, MAX_DDY)
         self.velocity += accel * dt
-        self.velocity = bound_vector(self.velocity, MAX_SPEED)
+        self.velocity = bound_vector(self.velocity, MAX_DX, MAX_DY)
 
     def run(self, power, dt):
         ''' Run for a given power and time. '''
@@ -213,7 +215,7 @@ class Player(Enemy):
         ''' Jump to a specific position. '''
         time = 2.0 * dy0 / self.gravity + 1.0
         dx0 = diffx / time - self.velocity[0]
-        dx0 = bound(diffx, 0.0, MAX_ACCEL - dy0)
+        dx0 = bound(dx0, -MAX_DDX, MAX_DY - dy0)
         self.accelerate(vector(dx0, dy0) / DT)
 
     def hop_to(self, diffx):

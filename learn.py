@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF
-from simulator import MAX_PLATWIDTH, MAX_SPEED, Enemy, Player
+from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -48,7 +48,7 @@ def get_coeffs():
 
 SHIFT_VECTOR = np.array([Player.size[0], 0.0, Enemy.size[0],
     20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
-SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_SPEED,
+SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
     MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH,
     MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
@@ -117,7 +117,7 @@ class FixedSarsaAgent:
     colour = 'r'
     action_count = 3
     alpha = 0.01
-    lmb = 0.1
+    lmb = 0.0
     gamma = 0.9
     temperature = 0.1
     variance = 0.1
@@ -130,9 +130,9 @@ class FixedSarsaAgent:
         self.action_weights = []
         self.filename = 'runs/' + self.name +'/'+ str(run)
         self.parameter_weights = [
-            2*np.eye(STATE_DIM + 1, 1)[:, 0],
-            *np.eye(STATE_DIM + 1, 1)[:, 0],
-            50*np.eye(STATE_DIM + 1, 1)[:, 0]]
+            1*np.eye(STATE_DIM + 1, 1)[:, 0],
+            50*np.eye(STATE_DIM + 1, 1)[:, 0],
+            200*np.eye(STATE_DIM + 1, 1)[:, 0]]
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
 
@@ -186,23 +186,22 @@ class FixedSarsaAgent:
     def compare_value_function(self, runs):
         ''' Compares the value function to the expected rewards. '''
         vf0 = 0.0
-        quality1, quality2 = 0.0, 0.0
         ret = 0.0
-        ret1, ret2 = 0.0, 0.0
+        rets = [0]*self.action_count
+        quality = [0]*self.action_count
         for _ in range(runs):
             sim = Simulator()
             state = sim.get_state()
             vf0 += self.value_function(state) / runs
-            feat = self.action_features[0](state)
-            quality1 += self.action_weights[0].dot(feat) / runs
-            quality2 += self.action_weights[1].dot(feat) / runs
             ret += sum(self.run_episode(sim)[2]) / runs
-            ret1 += self.follow_action(0) / runs
-            ret2 += self.follow_action(1) / runs
-        print "Q:", quality1, quality2
+            for i in range(self.action_count):
+                feat = self.action_features[i](state)
+                rets[i] += self.follow_action(i) / runs
+                quality[i] += self.action_weights[i].dot(feat) / runs
         print "V:", vf0
         print "R:", ret
-        print "RQ:", ret1, ret2
+        print "RQ:", rets
+        print "Q:", quality
 
     def load_runs(self):
         ''' Load the saved results for the agent. '''
@@ -278,7 +277,7 @@ class FixedSarsaAgent:
             rets = self.update()
             returns.append(sum(rets))
             total += sum(rets)
-            print 'Sarsa-Step:', step, 'R:', total / (step + 1)
+            print 'Sarsa-Step:', step, 'r:', sum(rets), 'R:', total / (step + 1)
         return returns
 
 class HardcodedAgent(FixedSarsaAgent):

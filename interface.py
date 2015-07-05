@@ -31,8 +31,9 @@ class Interface:
         ''' Uses input from the keyboard to control the player. '''
         keys_pressed = pygame.key.get_pressed()
         action_map = {
-            pygame.K_SPACE: ('jump', 100),
-            pygame.K_d: ('run', 1),
+            pygame.K_SPACE: ('hop', 50),
+            pygame.K_l: ('leap', 100),
+            pygame.K_d: ('run', 2),
         }
         action = ('run', 0)
         for key in action_map:
