@@ -25,7 +25,7 @@ MAX_PLATWIDTH = 400.0
 PLATHEIGHT = 40.0
 MIN_GAP = 50.0
 MAX_GAP = 200.0
-HEIGHT_DIFF = 100.0
+HEIGHT_DIFF = 100.0 - PLATHEIGHT
 MAX_WIDTH = 3*MAX_PLATWIDTH + 2*MAX_GAP
 DT = 0.05
 MAX_DDX = 20.0 / DT
@@ -123,9 +123,11 @@ class Simulator:
             end_episode = True
         return reward, end_episode
 
-    def update(self, action, dt=DT):
+    def update(self, action, dt=DT, interface = False):
         ''' Performs a single transition with the given action,
             then returns the new state and a reward. '''
+        if interface:
+            self.xpos = self.player.position[0]
         self.states.append([self.player.position.copy(),
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])

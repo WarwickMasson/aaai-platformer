@@ -2,13 +2,13 @@
 This file implements a simple pygame interface for the simulator.
 The simulator can be controlled with the keyboard, or updated without controls.
 '''
-from simulator import Simulator, DT
+from simulator import Simulator, DT, MAX_WIDTH
 import pygame
 import sys
 from util import vector
 
-WIDTH = 300
-LENGTH = 1000
+WIDTH = 500
+LENGTH = int(MAX_WIDTH)
 
 class Interface:
     ''' Implements a pygame interface that allows keyboard control
@@ -26,6 +26,7 @@ class Interface:
         self.enemy = pygame.image.load('./sprites/enemy.png')
         self.player = pygame.image.load('./sprites/player.png')
         self.centre = vector(0, WIDTH)/2
+        self.total = 0.0
 
     def control_update(self):
         ''' Uses input from the keyboard to control the player. '''
@@ -40,8 +41,11 @@ class Interface:
             if keys_pressed[key]:
                 action = action_map[key]
                 break
-        reward, end_episode = self.simulator.update(action, DT)
+        reward, end_episode = self.simulator.update(action, DT, True)
+        self.total += reward
         if end_episode:
+            print 'Episode Reward:', self.total
+            self.total = 0.0
             self.simulator = Simulator()
 
     def update(self):
