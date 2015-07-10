@@ -20,18 +20,18 @@ def bound_vector(vect, xmax, ymax):
     yval = bound(vect[1], -ymax, ymax)
     return vector(xval, yval)
 
-MIN_PLATWIDTH = 300.0
+MIN_PLATWIDTH = 250.0
 MAX_PLATWIDTH = 400.0
 PLATHEIGHT = 40.0
 MIN_GAP = 50.0
-MAX_GAP = 200.0
-HEIGHT_DIFF = 100.0 - PLATHEIGHT
+MAX_GAP = 100.0
+HEIGHT_DIFF = 50.0 - PLATHEIGHT
 MAX_WIDTH = 3*MAX_PLATWIDTH + 2*MAX_GAP
 DT = 0.05
-MAX_DDX = 20.0 / DT
-MAX_DDY = 50.0 / DT
-MAX_DX = 20.0
+MAX_DX = 50.0
 MAX_DY = 50.0
+MAX_DDX = 20.0 / DT
+MAX_DDY = MAX_DY / DT
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -188,6 +188,7 @@ class Enemy:
 class Player(Enemy):
     ''' Represents the player character. '''
     gravity = 9.8
+    decay = 0.995
 
     def __init__(self):
         ''' Initialize the position to the starting platform. '''
@@ -197,6 +198,7 @@ class Player(Enemy):
     def update(self, dt):
         ''' Update the position and velocity. '''
         self.position += self.velocity * dt
+        self.velocity *= self.decay
 
     def accelerate(self, accel, dt=DT):
         ''' Applies a power to the entity in direction theta. '''

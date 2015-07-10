@@ -23,7 +23,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 10
+FOURIER_DIM = 6
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector, depth=0, count=0):
@@ -117,7 +117,7 @@ class FixedSarsaAgent:
     colour = 'r'
     action_count = 3
     alpha = 0.01
-    lmb = 0.0
+    lmb = 0.1
     gamma = 0.9
     temperature = 0.1
     variance = 0.1
@@ -410,7 +410,7 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
-    gradsteps = 200
+    gradsteps = 1000
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
