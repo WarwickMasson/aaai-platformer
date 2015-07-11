@@ -4,7 +4,7 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF
+from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF, ENEMY_SPEED
 from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player
 
 def softmax(values):
@@ -46,13 +46,16 @@ def get_coeffs():
         scale[i] = norm(coeffs[i])
     return coeffs, scale, count
 
-SHIFT_VECTOR = np.array([Player.size[0], 0.0, Enemy.size[0],
-    20.0, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
+    ENEMY_SPEED, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
 SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
-    MAX_WIDTH + Enemy.size[0], 40.0, MAX_WIDTH,
+    MAX_WIDTH, 2*ENEMY_SPEED, MAX_WIDTH,
     MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
+INITIAL_RUN = 1.0
+INITIAL_HOP = 20.0
+INITIAL_LEAP = 200.0
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
@@ -130,9 +133,9 @@ class FixedSarsaAgent:
         self.action_weights = []
         self.filename = 'runs/' + self.name +'/'+ str(run)
         self.parameter_weights = [
-            1*np.eye(STATE_DIM + 1, 1)[:, 0],
-            50*np.eye(STATE_DIM + 1, 1)[:, 0],
-            200*np.eye(STATE_DIM + 1, 1)[:, 0]]
+            INITIAL_RUN*np.eye(STATE_DIM + 1, 1)[:, 0],
+            INITIAL_HOP*np.eye(STATE_DIM + 1, 1)[:, 0],
+            INITIAL_LEAP*np.eye(STATE_DIM + 1, 1)[:, 0]]
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
 

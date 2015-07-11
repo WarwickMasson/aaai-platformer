@@ -3,6 +3,7 @@ This file implements a simple pygame interface for the simulator.
 The simulator can be controlled with the keyboard, or updated without controls.
 '''
 from simulator import Simulator, DT, MAX_WIDTH
+from learn import INITIAL_HOP, INITIAL_LEAP
 import pygame
 import sys
 from util import vector
@@ -32,8 +33,8 @@ class Interface:
         ''' Uses input from the keyboard to control the player. '''
         keys_pressed = pygame.key.get_pressed()
         action_map = {
-            pygame.K_SPACE: ('hop', 50),
-            pygame.K_l: ('leap', 200),
+            pygame.K_SPACE: ('hop', INITIAL_HOP),
+            pygame.K_l: ('leap', INITIAL_LEAP),
             pygame.K_d: ('run', 2),
         }
         action = ('run', 0)

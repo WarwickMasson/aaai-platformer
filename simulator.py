@@ -32,6 +32,7 @@ MAX_DX = 50.0
 MAX_DY = 50.0
 MAX_DDX = 20.0 / DT
 MAX_DDY = MAX_DY / DT
+ENEMY_SPEED = 20.0
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -174,21 +175,23 @@ class Enemy:
 
     def __init__(self, platform):
         ''' Initializes the enemy on the platform. '''
-        self.dx = -20.0
+        self.dx = -ENEMY_SPEED
         self.platform = platform
         self.position = self.platform.size + self.platform.position
         self.position[0] -= self.size[0]
 
     def update(self, dt):
         ''' Shift the enemy along the platform. '''
-        self.position += vector(self.dx * dt, 0)
-        if not 0 <= self.position[0] - self.platform.position[0] <= self.platform.size[0] - self.size[0]:
+        right = self.platform.position[0] + self.platform.size[0] - self.size[0]
+        if not self.platform.position[0] < self.position[0] < right:
             self.dx *= -1
+        self.position[0] += self.dx * dt
+        self.position[0] = bound(self.position[0], self.platform.position[0], right)
 
 class Player(Enemy):
     ''' Represents the player character. '''
     gravity = 9.8
-    decay = 0.995
+    decay = 0.99
 
     def __init__(self):
         ''' Initialize the position to the starting platform. '''
@@ -224,7 +227,7 @@ class Player(Enemy):
 
     def hop_to(self, diffx):
         ''' Jump high to a position. '''
-        self.jump_to(diffx, 40.0)
+        self.jump_to(diffx, 45.0)
 
     def leap_to(self, diffx):
         ''' Jump over a gap. '''
