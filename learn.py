@@ -4,8 +4,8 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, HEIGHT_DIFF, ENEMY_SPEED
-from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player
+from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED
+from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player, MAX_GAP
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -23,7 +23,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 6
+FOURIER_DIM = 10
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector, depth=0, count=0):
@@ -47,10 +47,9 @@ def get_coeffs():
     return coeffs, scale, count
 
 SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
-    ENEMY_SPEED, 0.0, 0.0, 0.0, 2*HEIGHT_DIFF, 0.0])
+    ENEMY_SPEED, 0.0, 0.0])
 SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
-    MAX_WIDTH, 2*ENEMY_SPEED, MAX_WIDTH,
-    MAX_PLATWIDTH, MAX_WIDTH, 4*HEIGHT_DIFF, MAX_PLATWIDTH])
+    MAX_WIDTH, 2*ENEMY_SPEED, MAX_PLATWIDTH, MAX_GAP])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0

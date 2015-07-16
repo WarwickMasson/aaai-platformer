@@ -23,8 +23,8 @@ def bound_vector(vect, xmax, ymax):
 MIN_PLATWIDTH = 250.0
 MAX_PLATWIDTH = 400.0
 PLATHEIGHT = 40.0
-MIN_GAP = 50.0
-MAX_GAP = 100.0
+MIN_GAP = 25.0
+MAX_GAP = 50.0
 HEIGHT_DIFF = 50.0 - PLATHEIGHT
 MAX_WIDTH = 3*MAX_PLATWIDTH + 2*MAX_GAP
 DT = 0.05
@@ -50,12 +50,11 @@ class Simulator:
         ''' The entities are set up and added to a space. '''
         self.player = Player()
         self.platform1 = Platform(vector(0.0, 0.0))
-        self.gap = uniform(MIN_GAP, MAX_GAP)
-        self.platform2 = Platform(vector(self.gap + self.platform1.size[0],
-            uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
+        self.gap1 = uniform(MIN_GAP, MAX_GAP)
+        self.gap2 = 2*uniform(MIN_GAP, MAX_GAP)
+        self.platform2 = Platform(vector(self.gap1 + self.platform1.size[0], 0.0))
         self.platform3 = Platform(self.platform2.position +
-            vector(self.gap + self.platform2.size[0],
-            uniform(-HEIGHT_DIFF, HEIGHT_DIFF)))
+            vector(self.gap2 + self.platform2.size[0], 0.0))
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
         self.states = []
@@ -65,7 +64,9 @@ class Simulator:
         if self.player.position[0] > self.platform2.position[0]:
             plat1 = self.platform2
             plat2 = self.platform3
+            gap = self.gap2
         else:
+            gap = self.gap1
             plat1 = self.platform1
             plat2 = self.platform2
         state = np.array([
@@ -73,11 +74,8 @@ class Simulator:
             self.player.velocity[0],    #1
             self.enemy1.position[0],    #2
             self.enemy1.dx,             #3
-            plat1.position[0],          #4
-            plat1.size[0],              #5
-            plat2.position[0],          #6
-            plat2.position[1],          #7
-            plat2.size[0]])             #8
+            plat1.size[0],              #4
+            gap])                       #5
         return state
 
     def on_platforms(self):
