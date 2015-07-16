@@ -120,9 +120,9 @@ class FixedSarsaAgent:
     colour = 'r'
     action_count = 3
     alpha = 0.01
-    lmb = 0.1
+    lmb = 0.5
     gamma = 0.9
-    temperature = 0.1
+    temperature = 0.01
     variance = 0.1
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]

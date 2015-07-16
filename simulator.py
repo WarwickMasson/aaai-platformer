@@ -265,7 +265,7 @@ class Player(Enemy):
 
     def above_platform(self, platform):
         ''' Checks the player is above the platform. '''
-        return 0 <= self.position[0] - platform.position[0] <= platform.size[0]
+        return -self.size[0] <= self.position[0] - platform.position[0] <= platform.size[0]
 
     def on_platform(self, platform):
         ''' Checks the player is standing on the platform. '''
