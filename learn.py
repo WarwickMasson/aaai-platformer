@@ -143,6 +143,9 @@ class FixedSarsaAgent:
         self.steps = 0.0
         self.tdiff = 0.0
         self.tdiffs = []
+        self.total = 0.0
+        self.episodes = 0.0
+        self.returns = []
 
     def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -173,6 +176,9 @@ class FixedSarsaAgent:
             act = new_act
             acts.append(act)
         self.tdiffs.append(self.tdiff / self.steps)
+        self.episode += 1
+        self.total += sum(rewards)
+        self.returns.append(sum(rewards))
         return states, actions, rewards, acts
 
     def value_function(self, state):
@@ -288,19 +294,18 @@ class FixedSarsaAgent:
                 self.action_weights[i] += self.alpha * delta * traces[i] / COEFF_SCALE
             act = new_act
             feat = new_feat
+        self.episode += 1
+        self.total += sum(rewards)
+        self.returns.append(sum(rewards))
+        self.tdiffs.append(self.tdiff / self.steps)
+        print 'Sarsa-Step:', self.episode, 'r:', sum(rewards), 'R:', self.total / self.episodes, 'Delta:', self.tdiff / self.steps
         return rewards
 
     def learn(self, steps):
         ''' Learn for the given number of update steps. '''
-        returns = []
-        total = 0.0
         for step in range(steps):
             rets = self.update()
-            returns.append(sum(rets))
-            total += sum(rets)
-            self.tdiffs.append(self.tdiff / self.steps)
-            print 'Sarsa-Step:', step, 'r:', sum(rets), 'R:', total / (step + 1), 'Delta:', self.tdiff / self.steps
-        return returns
+        return self.returns
 
 class HardcodedAgent(FixedSarsaAgent):
     ''' A hard-coded fixed deterministic policy agent. '''
@@ -396,6 +401,7 @@ class QpamdpAgent(FixedSarsaAgent):
                 log_grad += self.log_gradient(state, act, action[1])
             psi[run, :] = np.append(log_grad, initial_features(states[0]))
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
+        print 'Enac-Episode:', self.episodes, 'R:', self.total / self.episodes, 'Delta:', self.tdiff / self.steps
         return grad, returns
 
     def parameter_update(self):
@@ -408,24 +414,13 @@ class QpamdpAgent(FixedSarsaAgent):
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        returns = []
-        total = 0.0
         for step in range(self.qsteps):
             new_ret = self.update()
-            total += sum(new_ret)
-            returns.append(sum(new_ret))
-            print 'Sarsa-Step:', step, 'r:', sum(new_ret), 'R:', total / (step + 1), 'Delta:', self.tdiff / self.steps
         for step in range(steps):
             new_ret = self.parameter_update()
-            total += sum(new_ret)[0]
-            returns.extend(new_ret)
-            print 'Qpamdp-Step:', step, 'R:', total / len(returns), self.tdiff / self.steps
             for _ in range(self.relearn):
                 new_ret = self.update()
-                print 'Sarsa-Step:', step, 'r:', sum(new_ret), 'R:', total / (step + 1), 'Delta:', self.tdiff / self.steps
-                total += sum(new_ret)
-                returns.append(sum(new_ret))
-        return returns
+        return self.returns
 
 class EnacAoAgent(QpamdpAgent):
     ''' Defines an alternating agent using eNAC. '''
@@ -437,20 +432,12 @@ class EnacAoAgent(QpamdpAgent):
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        returns = []
-        total = 0.0
         for step in range(steps):
             for i in range(self.qsteps):
                 new_ret = self.update()
-                total += sum(new_ret)
-                returns.append(sum(new_ret))
-                print 'Iteration:', step, 'Sarsa-Step:', i, 'R:', total / len(returns), self.tdiff / self.steps
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
-                returns.extend(new_ret)
-                total += sum(new_ret)[0]
-                print 'Iteration:', step, 'eNAC-Step:', i, 'R:', total / len(returns), self.tdiff / self.steps
-        return returns
+        return self.returns
 
 class EnacAgent(QpamdpAgent):
     ''' Defines an agent to optimize J(theta, omega) using eNAC. '''
@@ -462,14 +449,9 @@ class EnacAgent(QpamdpAgent):
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        returns = []
-        total = 0.0
         for step in range(steps):
             new_ret = self.parameter_update()
-            returns.extend(new_ret)
-            total += sum(new_ret)[0]
-            print 'eNAC-step:', step, 'R:', total / len(returns), self.tdiff / self.steps
-        return returns
+        return self.returns
 
 def determine_variance(agent, steps, runs=1):
     ''' Determine the variance of parameterized policy agent. '''
