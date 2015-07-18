@@ -6,7 +6,6 @@ import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED, GAP_MULT
 from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player, MAX_GAP
-import matplotlib.pyplot as plt
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -294,11 +293,11 @@ class FixedSarsaAgent:
                 self.action_weights[i] += self.alpha * delta * traces[i] / COEFF_SCALE
             act = new_act
             feat = new_feat
-        self.episode += 1
+        self.episodes += 1
         self.total += sum(rewards)
         self.returns.append(sum(rewards))
         self.tdiffs.append(self.tdiff / self.steps)
-        print 'Sarsa-Step:', self.episode, 'r:', sum(rewards), 'R:', self.total / self.episodes, 'Delta:', self.tdiff / self.steps
+        print 'Sarsa-Step:', '{0:5d}'.format(int(self.episodes)), 'r:', '{0:.4f}'.format(sum(rewards)), 'R:', '{0:.4f}'.format(self.total / self.episodes), 'Delta:', '{0:.5f}'.format(self.tdiff / self.steps)
         return rewards
 
     def learn(self, steps):
@@ -401,7 +400,7 @@ class QpamdpAgent(FixedSarsaAgent):
                 log_grad += self.log_gradient(state, act, action[1])
             psi[run, :] = np.append(log_grad, initial_features(states[0]))
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
-        print 'Enac-Episode:', self.episodes, 'R:', self.total / self.episodes, 'Delta:', self.tdiff / self.steps
+        print 'Enac-Episode:', '{0:5d}'.format(int(self.episodes)), 'R:', '{0:.4f}'.format(self.total / self.episodes), 'Delta:', '{0:.5f}'.format(self.tdiff / self.steps)
         return grad, returns
 
     def parameter_update(self):
