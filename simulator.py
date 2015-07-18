@@ -200,6 +200,7 @@ class Player(Enemy):
     def update(self, dt):
         ''' Update the position and velocity. '''
         self.position += self.velocity * dt
+        self.position[0] = bound(self.position[0], 0.0, MAX_WIDTH)
         self.velocity *= self.decay
 
     def accelerate(self, accel, dt=DT):

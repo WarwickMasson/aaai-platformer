@@ -6,6 +6,7 @@ import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED, GAP_MULT
 from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player, MAX_GAP
+import matplotlib.pyplot as plt
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -23,7 +24,7 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 10
+FOURIER_DIM = 6
 COUPLING = 2
 STATE_DIM = Simulator().get_state().size
 def generate_coefficients(coeffs, vector, depth=0, count=0):
@@ -55,15 +56,17 @@ print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
 INITIAL_HOP = 20.0
 INITIAL_LEAP = 200.0
+CHECK_SCALE = True
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
     new_state = np.copy(state)
     scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
-    for i in range(scaled.size):
-        if not 0 <= scaled[i] <= 1:
-            print i, scaled[i], new_state[i]
-            assert 0 <= scaled[i] <= 1
+    if CHECK_SCALE:
+        for i in range(scaled.size):
+            if not 0 <= scaled[i] <= 1:
+                print i, scaled[i], new_state[i]
+                assert 0 <= scaled[i] <= 1
     return scaled
 
 def fourier_basis(state):
@@ -92,7 +95,7 @@ def param_features(state):
 def initial_features(state):
     ''' Computes the initial features phi(s_0) for enac. '''
     state = scale_state(state)
-    variables = np.array([state[5], state[6], state[7], state[8]])
+    variables = np.array([state[4], state[5]])
     feat = np.append([1], variables)
     feat = np.append(feat, variables**2)
     return feat
@@ -137,6 +140,8 @@ class FixedSarsaAgent:
             INITIAL_LEAP*np.eye(STATE_DIM + 1, 1)[:, 0]]
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
+        self.steps = 0.0
+        self.tdiff = 0.0
 
     def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -148,13 +153,23 @@ class FixedSarsaAgent:
         actions = []
         acts = []
         end_ep = False
+        act = self.action_policy(state)
+        feat = self.action_features[act](state)
         while not end_ep:
-            act = self.action_policy(state)
             action = self.policy(state, act)
             state, reward, end_ep, _ = simulator.take_action(action)
+            new_act = self.action_policy(state)
+            new_feat = self.action_features[new_act](state)
+            delta = reward - self.action_weights[act].dot(feat)
+            if not end_ep:
+                delta += self.gamma * self.action_weights[new_act].dot(new_feat)
+            self.tdiff += abs(delta)
+            self.steps += 1.0
             states.append(state)
             actions.append(action)
             rewards.append(reward)
+            feat = new_feat
+            act = new_act
             acts.append(act)
         return states, actions, rewards, acts
 
@@ -262,6 +277,8 @@ class FixedSarsaAgent:
             delta = reward - self.action_weights[act].dot(feat)
             if not end_episode:
                 delta += self.gamma * self.action_weights[new_act].dot(new_feat)
+            self.tdiff += abs(delta)
+            self.steps += 1.0
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
@@ -275,11 +292,13 @@ class FixedSarsaAgent:
         ''' Learn for the given number of update steps. '''
         returns = []
         total = 0.0
+        tdiffs = []
         for step in range(steps):
             rets = self.update()
             returns.append(sum(rets))
             total += sum(rets)
-            print 'Sarsa-Step:', step, 'r:', sum(rets), 'R:', total / (step + 1)
+            tdiffs.append(self.tdiff / self.steps)
+            print 'Sarsa-Step:', step, 'r:', sum(rets), 'R:', total / (step + 1), 'Delta:', self.tdiff / self.steps
         return returns
 
 class HardcodedAgent(FixedSarsaAgent):
@@ -300,12 +319,12 @@ class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
     relearn = 50
-    runs = 50
+    runs = 100
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
     beta = 1.0
-    qsteps = 2000
+    qsteps = 3000
     opt_omega = False
 
     def get_parameters(self):
@@ -394,12 +413,12 @@ class QpamdpAgent(FixedSarsaAgent):
             new_ret = self.update()
             total += sum(new_ret)
             returns.append(sum(new_ret))
-            print 'Sarsa-Step:', step, 'R:', total / len(returns)
+            print 'Sarsa-Step:', step, 'r:', sum(new_ret), 'R:', total / (step + 1), 'Delta:', self.tdiff / self.steps
         for step in range(steps):
             new_ret = self.parameter_update()
             total += sum(new_ret)[0]
             returns.extend(new_ret)
-            print 'Qpamdp-Step:', step, 'R:', total / len(returns)
+            print 'Qpamdp-Step:', step, 'R:', total / len(returns), self.tdiff / self.steps
             for _ in range(self.relearn):
                 new_ret = self.update()
                 total += sum(new_ret)
