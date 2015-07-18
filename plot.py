@@ -37,6 +37,19 @@ def plot_run(agent_class, run):
     plot_return(agent, returns)
     plt.savefig(agent.filename + '.png', bbox_inches='tight')
 
+def plot_tdiffs(agent_class, runs=20):
+    ''' Plot tdiff for the runs. '''
+    agent = load(agent_class, 1)
+    tdiffs = 0*np.array(agent.tdiffs)
+    for run in range(1, runs + 1):
+        agent = load(agent_class, run)
+        tdiffs += np.array(agent.tdiffs) / runs
+    plt.plot(tdiffs, '-' + agent.colour, label=agent.legend)
+    plt.xlabel('Episodes')
+    plt.title('Average Delta')
+    plt.ylabel('Delta')
+    plt.savefig('./runs/delta.png', bbox_inches='tight')
+
 def plot_return_agents(agents, max_runs, runs=50):
     ''' Plot all the average returns for all agents. '''
     plt.clf()
