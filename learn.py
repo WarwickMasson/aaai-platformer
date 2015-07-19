@@ -175,7 +175,7 @@ class FixedSarsaAgent:
             act = new_act
             acts.append(act)
         self.tdiffs.append(self.tdiff / self.steps)
-        self.episode += 1
+        self.episodes += 1
         self.total += sum(rewards)
         self.returns.append(sum(rewards))
         return states, actions, rewards, acts
