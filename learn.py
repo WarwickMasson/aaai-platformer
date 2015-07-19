@@ -47,9 +47,9 @@ def get_coeffs():
     return coeffs, scale, count
 
 SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
-    ENEMY_SPEED, 0.0, 0.0])
+    ENEMY_SPEED, 0.0, 0.0, 0.0])
 SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
-    MAX_WIDTH, 2*ENEMY_SPEED, MAX_PLATWIDTH, GAP_MULT * MAX_GAP])
+    MAX_WIDTH, 2*ENEMY_SPEED, MAX_WIDTH, MAX_PLATWIDTH, GAP_MULT * MAX_GAP])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0

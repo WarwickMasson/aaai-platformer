@@ -45,10 +45,10 @@ class Platform:
 class Simulator:
     ''' This class represents the environment. '''
 
-    xpos = 0.0
 
     def __init__(self):
         ''' The entities are set up and added to a space. '''
+        self.xpos = 0.0
         self.player = Player()
         self.platform1 = Platform(vector(0.0, 0.0))
         self.gap1 = uniform(MIN_GAP, MAX_GAP)
@@ -63,20 +63,25 @@ class Simulator:
     def get_state(self):
         ''' Returns the representation of the current state. '''
         if self.player.position[0] > self.platform2.position[0]:
-            plat1 = self.platform2
-            plat2 = self.platform3
+            plat = self.platform2
+            gap = self.gap2
+            enemy = self.enemy2
+        elif self.player.position[0] > self.platform3.position[0]:
+            plat = self.platform3
+            enemy = self.enemy2
             gap = self.gap2
         else:
             gap = self.gap1
-            plat1 = self.platform1
-            plat2 = self.platform2
+            plat = self.platform1
+            enemy = self.enemy1
         state = np.array([
             self.player.position[0],    #0
             self.player.velocity[0],    #1
-            self.enemy1.position[0],    #2
-            self.enemy1.dx,             #3
-            plat1.size[0],              #4
-            gap])                       #5
+            enemy.position[0],          #2
+            enemy.dx,                   #3
+            plat.position[0],           #4
+            plat.size[0],               #5
+            gap])                       #6
         return state
 
     def on_platforms(self):
@@ -132,8 +137,6 @@ class Simulator:
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
         self.perform_action(action, dt)
-        if self.player.position[0] > self.platform2.position[0]:
-            self.enemy1, self.enemy2 = self.enemy2, self.enemy1
         for entity in [self.player, self.enemy1]:
             entity.update(dt)
         for platform in [self.platform1, self.platform2, self.platform3]:
