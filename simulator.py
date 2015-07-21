@@ -40,7 +40,7 @@ class Platform:
 
     def __init__(self, position):
         self.position = position
-        self.size = vector(uniform(MIN_PLATWIDTH, MAX_PLATWIDTH), PLATHEIGHT)
+        self.size = vector(300, PLATHEIGHT)
 
 class Simulator:
     ''' This class represents the environment. '''
@@ -51,8 +51,8 @@ class Simulator:
         self.xpos = 0.0
         self.player = Player()
         self.platform1 = Platform(vector(0.0, 0.0))
-        self.gap1 = uniform(MIN_GAP, MAX_GAP)
-        self.gap2 = GAP_MULT*uniform(MIN_GAP, MAX_GAP)
+        self.gap1 = 50
+        self.gap2 = 100
         self.platform2 = Platform(vector(self.gap1 + self.platform1.size[0], 0.0))
         self.platform3 = Platform(self.platform2.position +
             vector(self.gap2 + self.platform2.size[0], 0.0))
@@ -63,25 +63,14 @@ class Simulator:
     def get_state(self):
         ''' Returns the representation of the current state. '''
         if self.player.position[0] > self.platform2.position[0]:
-            plat = self.platform2
-            gap = self.gap2
             enemy = self.enemy2
-        elif self.player.position[0] > self.platform3.position[0]:
-            plat = self.platform3
-            enemy = self.enemy2
-            gap = self.gap2
         else:
-            gap = self.gap1
-            plat = self.platform1
             enemy = self.enemy1
         state = np.array([
             self.player.position[0],    #0
             self.player.velocity[0],    #1
             enemy.position[0],          #2
-            enemy.dx,                   #3
-            plat.position[0],           #4
-            plat.size[0],               #5
-            gap])                       #6
+            enemy.dx])                  #3
         return state
 
     def on_platforms(self):
@@ -137,7 +126,11 @@ class Simulator:
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
         self.perform_action(action, dt)
-        for entity in [self.player, self.enemy1]:
+        if self.player.position[0] > self.platform2.position[0]:
+            enemy = self.enemy2
+        else:
+            enemy = self.enemy1
+        for entity in [self.player, enemy]:
             entity.update(dt)
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
