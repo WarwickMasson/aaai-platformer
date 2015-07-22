@@ -4,8 +4,8 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED, GAP_MULT
-from simulator import MAX_PLATWIDTH, MAX_DX, Enemy, Player, MAX_GAP
+from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED
+from simulator import MAX_DX, Enemy, Player
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -24,8 +24,8 @@ def weighted_selection(values):
     return 0
 
 FOURIER_DIM = 6
-COUPLING = 2
 STATE_DIM = Simulator().get_state().size
+COUPLING = 2
 def generate_coefficients(coeffs, vector, depth=0, count=0):
     ''' Generate all coefficient vectors. '''
     if depth == STATE_DIM or count == COUPLING:
@@ -47,15 +47,15 @@ def get_coeffs():
     return coeffs, scale, count
 
 SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
-    ENEMY_SPEED, 0.0, 0.0, 0.0])
+    ENEMY_SPEED])
 SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
-    MAX_WIDTH, 2*ENEMY_SPEED, MAX_WIDTH, MAX_PLATWIDTH, GAP_MULT * MAX_GAP])
+    MAX_WIDTH, 2*ENEMY_SPEED])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
 INITIAL_HOP = 20.0
 INITIAL_LEAP = 200.0
-CHECK_SCALE = True
+CHECK_SCALE = False
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
@@ -120,7 +120,6 @@ class FixedSarsaAgent:
     legend = 'Fixed Sarsa'
     colour = 'r'
     action_count = 3
-    alpha = 0.01
     lmb = 0.5
     gamma = 0.9
     temperature = 0.01
@@ -145,6 +144,7 @@ class FixedSarsaAgent:
         self.total = 0.0
         self.episodes = 0.0
         self.returns = []
+        self.alpha = 1.0
 
     def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -273,7 +273,7 @@ class FixedSarsaAgent:
         end_episode = False
         rewards = []
         traces = []
-        for i in range(self.action_count):
+        for _ in range(self.action_count):
             traces.append(np.zeros((BASIS_COUNT,)))
         while not end_episode:
             action = self.policy(state, act)
@@ -289,6 +289,8 @@ class FixedSarsaAgent:
             for i in range(self.action_count):
                 traces[i] *= self.lmb * self.gamma
             traces[act] += feat
+            alpha_bound = self.gamma * traces[new_act].dot(new_feat) - traces[act].dot(feat)
+            self.alpha = min(self.alpha, 1.0 / abs(alpha_bound))
             for i in range(self.action_count):
                 self.action_weights[i] += self.alpha * delta * traces[i] / COEFF_SCALE
             act = new_act
