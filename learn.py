@@ -25,7 +25,7 @@ def weighted_selection(values):
 
 FOURIER_DIM = 6
 STATE_DIM = Simulator().get_state().size
-COUPLING = 2
+COUPLING = STATE_DIM
 def generate_coefficients(coeffs, vector, depth=0, count=0):
     ''' Generate all coefficient vectors. '''
     if depth == STATE_DIM or count == COUPLING:
