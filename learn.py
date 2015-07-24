@@ -122,7 +122,8 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    temperature = 0.01
+    temperature = 1.0
+    cooling = 0.995
     variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
@@ -300,6 +301,7 @@ class FixedSarsaAgent:
             feat = new_feat
         self.episodes += 1
         self.total += sum(rewards)
+        self.temperature *= self.cooling
         self.returns.append(sum(rewards))
         self.tdiffs.append(self.tdiff / self.steps)
         print 'Sarsa-Step:', '{0:5d}'.format(int(self.episodes)), 'r:', '{0:.4f}'.format(sum(rewards)), 'R:', '{0:.4f}'.format(self.total / self.episodes), 'Delta:', '{0:.5f}'.format(self.tdiff / self.steps)
