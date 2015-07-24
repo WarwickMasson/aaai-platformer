@@ -15,13 +15,13 @@ class Interface:
     ''' Implements a pygame interface that allows keyboard control
         of the player, and draws the field, players, and ball. '''
 
-    def __init__(self, simulator=Simulator()):
+    def __init__(self, sim=Simulator()):
         ''' Sets up the colors, pygame, and screen. '''
         pygame.init()
         size = (LENGTH, WIDTH)
         self.window = pygame.display.set_mode(size)
         self.clock = pygame.time.Clock()
-        self.simulator = simulator
+        self.simulator = sim
         self.background = pygame.image.load('./sprites/background.png')
         self.platform = pygame.image.load('./sprites/platform.png')
         self.enemy = pygame.image.load('./sprites/enemy.png')
@@ -56,31 +56,44 @@ class Interface:
                 pygame.quit()
                 sys.exit()
         self.control_update()
+        self.draw_background()
         self.draw()
+        self.draw_to_screen()
         self.clock.tick(1000*DT)
 
-    def draw(self):
-        ''' Draw the field and players. '''
+    def draw_background(self):
+        ''' Draw the static elements. '''
         self.window.blit(self.background, (0, 0))
-        self.draw_entity(self.simulator.player, self.player)
-        self.draw_entity(self.simulator.enemy1, self.enemy)
-        self.draw_entity(self.simulator.enemy2, self.enemy)
         self.draw_entity(self.simulator.platform1, self.platform)
         self.draw_entity(self.simulator.platform2, self.platform)
         self.draw_entity(self.simulator.platform3, self.platform)
+
+    def draw(self):
+        ''' Draw the player and the enemies. '''
+        self.draw_entity(self.simulator.player, self.player)
+        self.draw_entity(self.simulator.enemy1, self.enemy)
+        self.draw_entity(self.simulator.enemy2, self.enemy)
+
+    def draw_to_screen(self):
+        ''' Draw the current window to the screen. '''
         surf = pygame.transform.flip(self.window, False, True)
         self.window.blit(surf, (0, 0))
         pygame.display.update()
 
-    def draw_episode(self, simulator, name, save=False):
+    def draw_episode(self, simulators, name, save=False):
         ''' Draw each state in the simulator into folder name. '''
         lines = ""
-        self.simulator = simulator
-        for index, state in enumerate(self.simulator.states):
-            self.simulator.player.position = state[0]
-            self.simulator.enemy1.position = state[1]
-            self.simulator.enemy2.position = state[2]
-            self.draw()
+        longest = max([len(sim.states) for sim in simulators])
+        for index in range(longest):
+            self.draw_background()
+            for sim in simulators:
+                if index < len(sim.states):
+                    state = sim.states[index]
+                    self.simulator.player.position = state[0]
+                    self.simulator.enemy1.position = state[1]
+                    self.simulator.enemy2.position = state[2]
+                    self.draw()
+            self.draw_to_screen()
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')
             lines += str(index) + '.png\n'

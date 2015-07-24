@@ -67,13 +67,18 @@ def plot_return_agents(agents, max_runs, runs=50):
     plt.legend(loc='upper left')
     plt.savefig('./runs/return', bbox_inches='tight')
 
+PLOT_EPISODES = 50
+
 def plot_episode(agent_class, run):
     ''' Plot an example run. '''
     agent = load(agent_class, run)
-    sim = simulator.Simulator()
+    sims = []
+    for _ in range(PLOT_EPISODES):
+        sim = simulator.Simulator()
+        agent.run_episode(sim)
+        sims.append(sim)
     import interface
-    agent.run_episode(sim)
-    interface.Interface().draw_episode(sim, 'after')
+    interface.Interface().draw_episode(sims, 'after')
 
 def plot_value_function(agent_class, run, i):
     ''' Plot the value functions for run i. '''
