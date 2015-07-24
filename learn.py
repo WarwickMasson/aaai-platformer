@@ -123,7 +123,7 @@ class FixedSarsaAgent:
     lmb = 0.5
     gamma = 0.9
     temperature = 0.01
-    variance = 0.1
+    variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
     action_features = [fourier_basis, fourier_basis, fourier_basis]
@@ -262,7 +262,10 @@ class FixedSarsaAgent:
         features = self.parameter_features[action](state)
         weights = self.parameter_weights[action]
         mean = weights.dot(features)
-        return np.random.normal(mean, self.variance)
+        if self.variances[action] == 0.0:
+            return mean
+        else:
+            return np.random.normal(mean, self.variances[action])
 
     def update(self):
         ''' Learn for a single episode. '''
@@ -370,7 +373,7 @@ class QpamdpAgent(FixedSarsaAgent):
             given the state and the value. '''
         features = self.parameter_features[action](state)
         mean = self.parameter_weights[action].dot(features)
-        grad = (value - mean) * features / self.variance
+        grad = (value - mean) * features / self.variances[action]
         return grad
 
     def log_gradient(self, state, action, value):
