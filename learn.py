@@ -23,9 +23,17 @@ def weighted_selection(values):
         rand -= value
     return 0
 
-FOURIER_DIM = 6
+def formatf(value):
+    ''' Format a float to 5 decimal places. '''
+    return '{0:.5f}'.format(value)
+
+def formatd(value):
+    ''' Format an integer to 6 places. '''
+    return '{0:6d}'.format(int(value))
+
+FOURIER_DIM = 10
 STATE_DIM = Simulator().get_state().size
-COUPLING = STATE_DIM
+COUPLING = STATE_DIM - 2
 def generate_coefficients(coeffs, vector, depth=0, count=0):
     ''' Generate all coefficient vectors. '''
     if depth == STATE_DIM or count == COUPLING:
@@ -220,19 +228,18 @@ class FixedSarsaAgent:
         ret = 0.0
         rets = [0]*self.action_count
         quality = [0]*self.action_count
-        for i in range(runs):
-            sim = Simulator()
+        for i in range(1, runs + 1):
             state = sim.get_state()
             vf0 += self.value_function(state) / runs
-            ret += sum(self.run_episode(sim)[2]) / runs
+            ret += sum(self.run_episode()[2]) / runs
             for j in range(self.action_count):
-                rets[j] += self.follow_action(i) / runs
-                quality[j] += self.state_quality(state, i) / runs
-            print 'Step: ', i, 'V(s0): ', vf0, 'R: ', ret
-        print "V:", vf0
-        print "R:", ret
-        print "RQ:", rets
-        print "Q:", quality
+                rets[j] += self.follow_action(j) / runs
+                quality[j] += self.state_quality(state, j) / runs
+            print 'Step: ', formatd(i), 'V(s0): ', formatf(vf0 * runs / i), 'R: ', formatf(ret * runs / i)
+        print "V: ", formatf(vf0)
+        print "R:", formatf(ret)
+        print "Q:", [formatf(qual) for qual in quality]
+        print "RQ:", [formatf(retn) for retn in rets]
 
     def load_runs(self):
         ''' Load the saved results for the agent. '''
@@ -302,11 +309,14 @@ class FixedSarsaAgent:
             act = new_act
             feat = new_feat
         self.episodes += 1
-        self.total += sum(rewards)
+        total_ret = sum(rewards)
+        self.total += total_ret
         self.temperature *= self.cooling
-        self.returns.append(sum(rewards))
+        self.returns.append(total_ret)
         self.tdiffs.append(self.tdiff / self.steps)
-        print 'Sarsa-Step:', '{0:5d}'.format(int(self.episodes)), 'r:', '{0:.4f}'.format(sum(rewards)), 'R:', '{0:.4f}'.format(self.total / self.episodes), 'Delta:', '{0:.5f}'.format(self.tdiff / self.steps)
+        av_ret = self.total / self.episodes
+        av_diff = self.tdiff / self.steps
+        print 'Sarsa-Step:', formatd(self.episodes), 'r:', formatf(total_ret), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         return rewards
 
     def learn(self, steps):
@@ -409,7 +419,9 @@ class QpamdpAgent(FixedSarsaAgent):
                 log_grad += self.log_gradient(state, act, action[1])
             psi[run, :] = np.append(log_grad, initial_features(states[0]))
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
-        print 'Enac-Episode:', '{0:5d}'.format(int(self.episodes)), 'R:', '{0:.4f}'.format(self.total / self.episodes), 'Delta:', '{0:.5f}'.format(self.tdiff / self.steps)
+        av_ret = self.total / self.episodes
+        av_diff = self.tdiff / self.steps
+        print 'Enac-Episode:', formatd(self.episodes), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         return grad, returns
 
     def parameter_update(self):
