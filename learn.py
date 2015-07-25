@@ -122,7 +122,6 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    temperature = 1.0
     cooling = 0.995
     variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
@@ -146,6 +145,7 @@ class FixedSarsaAgent:
         self.episodes = 0.0
         self.returns = []
         self.alpha = 1.0
+        self.temperature = 1.0
 
     def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
@@ -158,21 +158,18 @@ class FixedSarsaAgent:
         acts = []
         end_ep = False
         act = self.action_policy(state)
-        feat = self.action_features[act](state)
         while not end_ep:
             action = self.policy(state, act)
-            state, reward, end_ep, _ = simulator.take_action(action)
+            new_state, reward, end_ep, _ = simulator.take_action(action)
             new_act = self.action_policy(state)
-            new_feat = self.action_features[new_act](state)
-            delta = reward - self.action_weights[act].dot(feat)
+            delta = reward - self.state_quality(state, act)
             if not end_ep:
-                delta += self.gamma * self.action_weights[new_act].dot(new_feat)
+                delta += self.gamma * self.state_quality(new_state, new_act)
             self.tdiff += abs(delta)
             self.steps += 1.0
             states.append(state)
             actions.append(action)
             rewards.append(reward)
-            feat = new_feat
             act = new_act
             acts.append(act)
         self.tdiffs.append(self.tdiff / self.steps)
@@ -186,9 +183,17 @@ class FixedSarsaAgent:
         value = 0
         action_prob = self.action_prob(state)
         for act in range(self.action_count):
-            feat = self.action_features[act](state)
-            value += action_prob[act] * self.action_weights[act].dot(feat)
+            value += action_prob[act] * self.state_quality(state, act)
         return value
+
+    def state_quality(self, state, act):
+        ''' Returns Q(s, a). '''
+        feat = self.action_features[act](state)
+        return self.feat_quality(feat, act)
+
+    def feat_quality(self, feat, act):
+        ''' Returns w_a * phi. '''
+        return self.action_weights[act].dot(feat)
 
     def evaluate_policy(self, runs):
         ''' Evaluate the current policy. '''
@@ -220,9 +225,8 @@ class FixedSarsaAgent:
             vf0 += self.value_function(state) / runs
             ret += sum(self.run_episode(sim)[2]) / runs
             for i in range(self.action_count):
-                feat = self.action_features[i](state)
                 rets[i] += self.follow_action(i) / runs
-                quality[i] += self.action_weights[i].dot(feat) / runs
+                quality[i] += self.state_quality(state, i) / runs
         print "V:", vf0
         print "R:", ret
         print "RQ:", rets
@@ -245,12 +249,8 @@ class FixedSarsaAgent:
 
     def action_prob(self, state):
         ''' Computes the probability of selecting each action. '''
-        values = []
-        for i in range(self.action_count):
-            features = self.action_features[i](state)
-            val = self.action_weights[i].T.dot(features)
-            values.append(val / self.temperature)
-        prob = softmax(values)
+        values = [self.state_quality(state, i) for i in range(self.action_count)]
+        prob = softmax(values / self.temperature)
         return prob
 
     def action_policy(self, state):
@@ -285,9 +285,9 @@ class FixedSarsaAgent:
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
-            delta = reward - self.action_weights[act].dot(feat)
+            delta = reward - self.feat_quality(feat, act)
             if not end_episode:
-                delta += self.gamma * self.action_weights[new_act].dot(new_feat)
+                delta += self.gamma * self.feat_quality(new_feat, new_act)
             self.tdiff += abs(delta)
             self.steps += 1.0
             for i in range(self.action_count):
