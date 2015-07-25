@@ -250,7 +250,7 @@ class FixedSarsaAgent:
     def action_prob(self, state):
         ''' Computes the probability of selecting each action. '''
         values = [self.state_quality(state, i) for i in range(self.action_count)]
-        prob = softmax(values / self.temperature)
+        prob = softmax([val / self.temperature for val in values])
         return prob
 
     def action_policy(self, state):
