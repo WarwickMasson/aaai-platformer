@@ -186,6 +186,10 @@ class FixedSarsaAgent:
         self.returns.append(sum(rewards))
         return states, actions, rewards, acts
 
+    def discount(self, rewards):
+        ''' Computes the discounted sum of rewards. '''
+        return sum([(self.gamma**t)*reward for t, reward in enumerate(rewards)])
+
     def value_function(self, state):
         ''' Computes V(s) = E_a[pi(s,a)Q(s,a)] '''
         value = 0
@@ -220,7 +224,7 @@ class FixedSarsaAgent:
             return reward
         else:
             rewards = self.run_episode(sim)[2]
-            return reward + sum(rewards)
+            return reward + self.gamma * self.discount(rewards)
 
     def compare_value_function(self, runs):
         ''' Compares the value function to the expected rewards. '''
@@ -233,7 +237,7 @@ class FixedSarsaAgent:
         for j in range(self.action_count):
             quality[j] = self.state_quality(state, j)
         for i in range(1, runs + 1):
-            ret += sum(self.run_episode()[2]) / runs
+            ret += self.discount(self.run_episode()[2]) / runs
             for j in range(self.action_count):
                 rets[j] += self.follow_action(j) / runs
             print 'Step: ', formatd(i), 'V(s0): ', formatf(vf0), 'R: ', formatf(ret * runs / i)
