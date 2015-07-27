@@ -35,6 +35,8 @@ MAX_DY = 50.0
 MAX_DDX = 20.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 20.0
+LEAP_DEV = 200.0
+HOP_DEV = 20.0
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -89,8 +91,10 @@ class Simulator:
                 elif act == 'run':
                     self.player.run(parameters, dt)
                 elif act == 'leap':
+                    parameters -= abs(np.random.normal(0, LEAP_DEV))
                     self.player.leap_to(parameters)
                 elif act == 'hop':
+                    parameters += np.random.normal(0, HOP_DEV)
                     self.player.hop_to(parameters)
         else:
             self.player.fall()
