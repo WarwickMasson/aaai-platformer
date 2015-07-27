@@ -37,7 +37,7 @@ MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
 LEAP_DEV = 200.0
 HOP_DEV = 20.0
-ENEMY_NOISE = 5.0
+ENEMY_NOISE = 0.5
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -209,8 +209,9 @@ class Player(Enemy):
         ''' Applies a power to the entity in direction theta. '''
         accel = bound_vector(accel, MAX_DDX, MAX_DDY)
         self.velocity += accel * dt
-        self.velocity[0] += np.random.normal(0.0, ENEMY_NOISE*dt)
+        self.velocity[0] -= abs(np.random.normal(0.0, ENEMY_NOISE*dt))
         self.velocity = bound_vector(self.velocity, MAX_DX, MAX_DY)
+        self.velocity[0] = max(self.velocity[0], 0.0)
 
     def run(self, power, dt):
         ''' Run for a given power and time. '''
