@@ -31,6 +31,10 @@ def formatd(value):
     ''' Format an integer to 6 places. '''
     return '{0:6d}'.format(int(value))
 
+def format_array(values):
+    ''' Format a float array. '''
+    return [formatf(value) for value in values]
+
 FOURIER_DIM = 6
 STATE_DIM = Simulator().get_state().size
 COUPLING = STATE_DIM - 2
@@ -163,18 +167,19 @@ class FixedSarsaAgent:
         states = [state]
         rewards = []
         actions = []
-        acts = []
         end_ep = False
         act = self.action_policy(state)
+        acts = [act]
         while not end_ep:
             action = self.policy(state, act)
             new_state, reward, end_ep, _ = simulator.take_action(action)
-            new_act = self.action_policy(state)
+            new_act = self.action_policy(new_state)
             delta = reward - self.state_quality(state, act)
             if not end_ep:
                 delta += self.gamma * self.state_quality(new_state, new_act)
             self.tdiff += abs(delta)
             self.steps += 1.0
+            state = new_state
             states.append(state)
             actions.append(action)
             rewards.append(reward)
