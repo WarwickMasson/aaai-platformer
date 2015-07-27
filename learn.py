@@ -224,18 +224,19 @@ class FixedSarsaAgent:
 
     def compare_value_function(self, runs):
         ''' Compares the value function to the expected rewards. '''
-        vf0 = 0.0
         ret = 0.0
         rets = [0]*self.action_count
         quality = [0]*self.action_count
+        sim = Simulator()
+        state = sim.get_state()
+        vf0 = self.value_function(state)
+        for j in range(self.action_count):
+            quality[j] = self.state_quality(state, j)
         for i in range(1, runs + 1):
-            state = sim.get_state()
-            vf0 += self.value_function(state) / runs
             ret += sum(self.run_episode()[2]) / runs
             for j in range(self.action_count):
                 rets[j] += self.follow_action(j) / runs
-                quality[j] += self.state_quality(state, j) / runs
-            print 'Step: ', formatd(i), 'V(s0): ', formatf(vf0 * runs / i), 'R: ', formatf(ret * runs / i)
+            print 'Step: ', formatd(i), 'V(s0): ', formatf(vf0), 'R: ', formatf(ret * runs / i)
         print "V: ", formatf(vf0)
         print "R:", formatf(ret)
         print "Q:", [formatf(qual) for qual in quality]
