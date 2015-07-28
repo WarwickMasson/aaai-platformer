@@ -105,11 +105,7 @@ def param_features(state):
 
 def initial_features(state):
     ''' Computes the initial features phi(s_0) for enac. '''
-    state = scale_state(state)
-    variables = np.array([state[4], state[5]])
-    feat = np.append([1], variables)
-    feat = np.append(feat, variables**2)
-    return feat
+    return np.array([1])
 
 def load(agent_class, run):
     ''' Load the given class. '''
@@ -353,12 +349,12 @@ class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
     relearn = 50
-    runs = 100
+    runs = 50
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
     beta = 1.0
-    qsteps = 3000
+    qsteps = 1000
     opt_omega = False
 
     def get_parameters(self):
@@ -431,7 +427,7 @@ class QpamdpAgent(FixedSarsaAgent):
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
         av_ret = self.total / self.episodes
         av_diff = self.tdiff / self.steps
-        print 'Enac-Episode:', formatd(self.episodes), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
+        print 'Enac-Step:', formatd(self.episodes), 'r:', formatf(sum(returns[:,0]) / self.runs), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         return grad, returns
 
     def parameter_update(self):
