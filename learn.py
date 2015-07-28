@@ -66,7 +66,7 @@ COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
 INITIAL_HOP = 5.0
-INITIAL_LEAP = 200.0
+INITIAL_LEAP = 500.0
 CHECK_SCALE = False
 
 def scale_state(state):

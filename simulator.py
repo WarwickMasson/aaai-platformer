@@ -36,8 +36,8 @@ MAX_DX_ON = 30.0
 MAX_DDX = 20.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
-LEAP_DEV = 50.0
-HOP_DEV = 20.0
+LEAP_DEV = 5.0
+HOP_DEV = 10.0
 ENEMY_NOISE = 0.5
 
 class Platform:
@@ -93,10 +93,8 @@ class Simulator:
                 elif act == 'run':
                     self.player.run(parameters, dt)
                 elif act == 'leap':
-                    parameters -= abs(np.random.normal(0, LEAP_DEV))
                     self.player.leap_to(parameters)
                 elif act == 'hop':
-                    parameters += np.random.normal(0, HOP_DEV)
                     self.player.hop_to(parameters)
         else:
             self.player.fall()
@@ -227,20 +225,22 @@ class Player(Enemy):
         ''' Jump up for a single step. '''
         self.accelerate(vector(0.0, power / DT))
 
-    def jump_to(self, diffx, dy0):
+    def jump_to(self, diffx, dy0, dev):
         ''' Jump to a specific position. '''
         time = 2.0 * dy0 / self.gravity + 1.0
         dx0 = diffx / time - self.velocity[0]
         dx0 = bound(dx0, -MAX_DDX, MAX_DY - dy0)
-        self.accelerate(vector(dx0, dy0) / DT)
+        noise = -abs(np.random.normal(0.0, dev, 2))
+        accel = vector(dx0, dy0) + noise
+        self.accelerate(accel / DT)
 
     def hop_to(self, diffx):
         ''' Jump high to a position. '''
-        self.jump_to(diffx, 45.0)
+        self.jump_to(diffx, 45.0, HOP_DEV)
 
     def leap_to(self, diffx):
         ''' Jump over a gap. '''
-        self.jump_to(diffx, 25.0)
+        self.jump_to(diffx, 25.0, LEAP_DEV)
 
     def fall(self):
         ''' Apply gravity. '''
