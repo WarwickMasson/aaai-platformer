@@ -24,7 +24,7 @@ WIDTH1 = 250
 WIDTH2 = 320
 WIDTH3 = 100
 GAP1 = 75
-GAP2 = 125
+GAP2 = 100
 MAX_PLATWIDTH = max([WIDTH1, WIDTH2, WIDTH3])
 PLATHEIGHT = 40.0
 HEIGHT_DIFF = 50.0 - PLATHEIGHT
@@ -32,10 +32,11 @@ MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 DT = 0.05
 MAX_DX = 50.0
 MAX_DY = 50.0
+MAX_DX_ON = 30.0
 MAX_DDX = 20.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
-LEAP_DEV = 200.0
+LEAP_DEV = 50.0
 HOP_DEV = 20.0
 ENEMY_NOISE = 0.5
 
@@ -212,6 +213,10 @@ class Player(Enemy):
         self.velocity[0] -= abs(np.random.normal(0.0, ENEMY_NOISE*dt))
         self.velocity = bound_vector(self.velocity, MAX_DX, MAX_DY)
         self.velocity[0] = max(self.velocity[0], 0.0)
+
+    def ground_bound(self):
+        ''' Bound dx while on the ground. '''
+        self.velocity[0] = bound(self.velocity[0], 0.0, MAX_DX_ON)
 
     def run(self, power, dt):
         ''' Run for a given power and time. '''
