@@ -130,7 +130,7 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    cooling = 0.992
+    cooling = 0.99
     variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
@@ -265,7 +265,11 @@ class FixedSarsaAgent:
     def action_prob(self, state):
         ''' Computes the probability of selecting each action. '''
         values = [self.state_quality(state, i) for i in range(self.action_count)]
-        prob = softmax([val / self.temperature for val in values])
+        if self.temperature == 0.0:
+            prob = [0]*self.action_count
+            prob[np.argmax(values)] = 1.0
+        else:
+            prob = softmax([val / self.temperature for val in values])
         return prob
 
     def action_policy(self, state):

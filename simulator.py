@@ -21,10 +21,10 @@ def bound_vector(vect, xmax, ymax):
     return vector(xval, yval)
 
 WIDTH1 = 250
-WIDTH2 = 300
+WIDTH2 = 250
 WIDTH3 = 100
 GAP1 = 75
-GAP2 = 100
+GAP2 = 75
 MAX_PLATWIDTH = max([WIDTH1, WIDTH2, WIDTH3])
 PLATHEIGHT = 40.0
 HEIGHT_DIFF = 50.0 - PLATHEIGHT
@@ -36,8 +36,8 @@ MAX_DX_ON = 50.0
 MAX_DDX = 50.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
-LEAP_DEV = 2.0
-HOP_DEV = 2.0
+LEAP_DEV = 1.0
+HOP_DEV = 1.0
 ENEMY_NOISE = 0.5
 
 class Platform:
