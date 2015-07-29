@@ -65,7 +65,7 @@ SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
-INITIAL_HOP = 20.0
+INITIAL_HOP = 100.0
 INITIAL_LEAP = 500.0
 CHECK_SCALE = False
 
@@ -130,7 +130,7 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    cooling = 0.99
+    cooling = 0.992
     variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
