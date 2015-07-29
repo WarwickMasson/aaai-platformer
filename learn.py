@@ -65,7 +65,7 @@ SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
-INITIAL_HOP = 5.0
+INITIAL_HOP = 20.0
 INITIAL_LEAP = 500.0
 CHECK_SCALE = False
 

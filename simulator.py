@@ -23,17 +23,17 @@ def bound_vector(vect, xmax, ymax):
 WIDTH1 = 250
 WIDTH2 = 320
 WIDTH3 = 100
-GAP1 = 75
-GAP2 = 100
+GAP1 = 100
+GAP2 = 150
 MAX_PLATWIDTH = max([WIDTH1, WIDTH2, WIDTH3])
 PLATHEIGHT = 40.0
 HEIGHT_DIFF = 50.0 - PLATHEIGHT
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 DT = 0.05
-MAX_DX = 50.0
+MAX_DX = 100.0
 MAX_DY = 50.0
-MAX_DX_ON = 30.0
-MAX_DDX = 20.0 / DT
+MAX_DX_ON = 50.0
+MAX_DDX = 50.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
 LEAP_DEV = 5.0
@@ -129,6 +129,8 @@ class Simulator:
                             self.enemy1.position.copy(),
                             self.enemy2.position.copy()])
         self.perform_action(action, dt)
+        if self.on_platforms():
+            self.player.ground_bound()
         if self.player.position[0] > self.platform2.position[0]:
             enemy = self.enemy2
         else:
@@ -202,7 +204,7 @@ class Player(Enemy):
         ''' Update the position and velocity. '''
         self.position += self.velocity * dt
         self.position[0] = bound(self.position[0], 0.0, MAX_WIDTH)
-        self.velocity *= self.decay
+        self.velocity[0] *= self.decay
 
     def accelerate(self, accel, dt=DT):
         ''' Applies a power to the entity in direction theta. '''
@@ -236,7 +238,7 @@ class Player(Enemy):
 
     def hop_to(self, diffx):
         ''' Jump high to a position. '''
-        self.jump_to(diffx, 45.0, HOP_DEV)
+        self.jump_to(diffx, 35.0, HOP_DEV)
 
     def leap_to(self, diffx):
         ''' Jump over a gap. '''
