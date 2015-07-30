@@ -326,7 +326,7 @@ class FixedSarsaAgent:
         self.tdiffs.append(self.tdiff / self.steps)
         av_ret = self.total / self.episodes
         av_diff = self.tdiff / self.steps
-        print 'Sarsa-Step:', formatd(self.episodes), 'r:', formatf(total_ret), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
+        print 'Step:', formatd(self.episodes), 'r:', formatf(total_ret), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         return rewards
 
     def learn(self, steps):
@@ -430,7 +430,7 @@ class QpamdpAgent(FixedSarsaAgent):
             psi[run, :] = np.append(log_grad, initial_features(states[0]))
             av_ret = self.total / self.episodes
             av_diff = self.tdiff / self.steps
-            print 'Enac-Step:', formatd(self.episodes), 'r:', formatf(sum(rewards)), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
+            print 'Step:', formatd(self.episodes), 'r:', formatf(sum(rewards)), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
         return grad, returns
 
