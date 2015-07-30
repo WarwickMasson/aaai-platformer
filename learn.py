@@ -480,7 +480,8 @@ class EnacAgent(QpamdpAgent):
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        for step in range(steps):
+        updates = int(steps / self.runs)
+        for step in range(updates):
             new_ret = self.parameter_update()
         return self.returns
 
