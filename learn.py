@@ -459,11 +459,12 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
-    gradsteps = 1000
+    gradsteps = 100
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        for step in range(steps):
+        updates = int(steps / (self.qsteps + self.gradsteps * self.runs))
+        for _ in range(updates):
             for i in range(self.qsteps):
                 new_ret = self.update()
             for i in range(self.gradsteps):
