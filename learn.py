@@ -357,7 +357,7 @@ class QpamdpAgent(FixedSarsaAgent):
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 1.0
+    beta = 0.1
     qsteps = 2000
     opt_omega = False
 
@@ -446,7 +446,8 @@ class QpamdpAgent(FixedSarsaAgent):
         ''' Learn for a given number of steps. '''
         for step in range(self.qsteps):
             new_ret = self.update()
-        for step in range(steps):
+        updates = int((steps - self.qsteps) / (self.runs + self.relearn))
+        for step in range(updates):
             new_ret = self.parameter_update()
             for _ in range(self.relearn):
                 new_ret = self.update()
