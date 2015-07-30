@@ -155,8 +155,9 @@ class Simulator:
                 diff = DT
                 if params < DT:
                     diff = params
-                reward, end_episode = self.update(('run', 2.0), diff)
-                params -= diff
+                if params > 0:
+                    reward, end_episode = self.update(('run', 2.0), diff)
+                    params -= diff
                 run = params > 0
             elif act in ['jump', 'hop', 'leap']:
                 reward, end_episode = self.update(action)

@@ -358,7 +358,7 @@ class QpamdpAgent(FixedSarsaAgent):
     legend = 'Q-PAMDP'
     colour = 'g'
     beta = 1.0
-    qsteps = 1000
+    qsteps = 2000
     opt_omega = False
 
     def get_parameters(self):
