@@ -428,10 +428,10 @@ class QpamdpAgent(FixedSarsaAgent):
             for state, act, action in zip(states, acts, actions):
                 log_grad += self.log_gradient(state, act, action[1])
             psi[run, :] = np.append(log_grad, initial_features(states[0]))
+            av_ret = self.total / self.episodes
+            av_diff = self.tdiff / self.steps
+            print 'Enac-Step:', formatd(self.episodes), 'r:', formatf(sum(rewards)), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         grad = np.linalg.pinv(psi).dot(returns)[0:param_size, 0]
-        av_ret = self.total / self.episodes
-        av_diff = self.tdiff / self.steps
-        print 'Enac-Step:', formatd(self.episodes), 'r:', formatf(sum(returns[:,0]) / self.runs), 'R:', formatf(av_ret), 'Delta:', formatf(av_diff)
         return grad, returns
 
     def parameter_update(self):
