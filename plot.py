@@ -6,6 +6,7 @@ from learn import load, SHIFT_VECTOR, SCALE_VECTOR, fourier_basis, STATE_DIM
 import numpy as np
 import simulator
 import scipy.stats as t
+from mpl_toolkits.mplot3d import axes3d
 
 VALUE_STEPS = 100
 
@@ -137,3 +138,20 @@ def plot_x_dx(agent_class, run):
         print col
         plot.plot_surface(xgrid, ygrid, zgrid, color=col)
     plt.savefig('./runs/' + agent.name + '/value_functions/xdx', bbox_inches='tight')
+
+def plot_cooling():
+    ''' Plot the effect of different cooling parameters. '''
+    plt.clf()
+    fig = plt.figure()
+    plot = fig.add_subplot(111, projection='3d')
+    plot.set_ylabel('Cooling')
+    plot.set_xlabel('Episodes')
+    plot.set_zlabel('Temperature')
+    crange = np.arange(0.99, 1.0, 0.0001)
+    eprange = np.arange(0, 2000, 2.0)
+    xgrid, ygrid = np.meshgrid(eprange, crange)
+    func = lambda cool, ep: cool**ep
+    zarray = np.array([func(cool, ep) for ep, cool in zip(np.ravel(xgrid), np.ravel(ygrid))])
+    zgrid = zarray.reshape(xgrid.shape)
+    plot.plot_surface(xgrid, ygrid, zgrid, color=[1, 0, 0, 0.9])
+    plt.savefig('./runs/cooling.png', bbox_inches='tight')
