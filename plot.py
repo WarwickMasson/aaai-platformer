@@ -2,7 +2,7 @@
 Plot runs.
 '''
 import matplotlib.pyplot as plt
-from learn import load, SHIFT_VECTOR, SCALE_VECTOR, fourier_basis, STATE_DIM
+from learn import load, SHIFT_VECTOR, SCALE_VECTOR, fourier_basis, STATE_DIM, FixedSarsaAgent
 import numpy as np
 import simulator
 import scipy.stats as t
@@ -155,3 +155,10 @@ def plot_cooling():
     zgrid = zarray.reshape(xgrid.shape)
     plot.plot_surface(xgrid, ygrid, zgrid, color=[1, 0, 0, 0.9])
     plt.savefig('./runs/cooling.png', bbox_inches='tight')
+    plt.clf()
+    eprange2 = range(5000)
+    values = [func(FixedSarsaAgent.cooling, ep) for ep in eprange2]
+    plt.plot(eprange2, values, '-r')
+    plt.xlabel('Episodes')
+    plt.ylabel('Temperature')
+    plt.savefig('./runs/coolsetting.png', bbox_inches='tight')
