@@ -130,7 +130,7 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    cooling = 0.996
+    cooling = 0.995
     variances = [0.001, 0.1, 0.1]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
