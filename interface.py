@@ -8,7 +8,7 @@ import pygame
 import sys
 from util import vector
 
-WIDTH = 500
+WIDTH = 300
 LENGTH = int(MAX_WIDTH)
 
 class Interface:
@@ -26,7 +26,7 @@ class Interface:
         self.platform = pygame.image.load('./sprites/platform.png')
         self.enemy = pygame.image.load('./sprites/enemy.png')
         self.player = pygame.image.load('./sprites/player.png')
-        self.centre = vector(0, WIDTH)/2
+        self.centre = vector(0, 100)/2
         self.total = 0.0
 
     def control_update(self):
