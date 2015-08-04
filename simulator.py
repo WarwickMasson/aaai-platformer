@@ -25,9 +25,11 @@ WIDTH2 = 325
 WIDTH3 = 100
 GAP1 = 75
 GAP2 = 75
+HEIGHT1 = 0.0
+HEIGHT2 = 0.0
+HEIGHT3 = 0.0
 MAX_PLATWIDTH = max([WIDTH1, WIDTH2, WIDTH3])
 PLATHEIGHT = 40.0
-HEIGHT_DIFF = 50.0 - PLATHEIGHT
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 DT = 0.05
 MAX_DX = 100.0
@@ -43,8 +45,8 @@ ENEMY_NOISE = 0.5
 class Platform:
     ''' Represents a fixed platform. '''
 
-    def __init__(self, xpos, width):
-        self.position = vector(xpos, 0.0)
+    def __init__(self, xpos, width, height):
+        self.position = vector(xpos, height)
         self.size = vector(width, PLATHEIGHT)
 
 class Simulator:
@@ -55,10 +57,10 @@ class Simulator:
         ''' The entities are set up and added to a space. '''
         self.xpos = 0.0
         self.player = Player()
-        self.platform1 = Platform(0.0, WIDTH1)
-        self.platform2 = Platform(GAP1 + self.platform1.size[0], WIDTH2)
+        self.platform1 = Platform(0.0, WIDTH1, HEIGHT1)
+        self.platform2 = Platform(GAP1 + self.platform1.size[0], WIDTH2, HEIGHT2)
         self.platform3 = Platform(self.platform2.position[0] +
-            GAP2 + self.platform2.size[0], WIDTH3)
+            GAP2 + self.platform2.size[0], WIDTH3, HEIGHT3)
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
         self.states = []

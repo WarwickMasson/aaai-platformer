@@ -5,7 +5,8 @@ import numpy as np
 import pickle
 from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED
-from simulator import MAX_DX, Enemy, Player
+from simulator import MAX_DX, Enemy, Player, GAP1, GAP2
+from simulator import WIDTH1, WIDTH2, WIDTH3, HEIGHT1, HEIGHT2, HEIGHT3
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -96,6 +97,26 @@ def polynomial_basis(state):
         basis[i] = coeff.dot(scaled)
     basis[0] = 1.0
     return basis
+
+def platform_features(state):
+    ''' Compute the implicit features of the platforms. '''
+    xpos = state[0]
+    if xpos < WIDTH1 + GAP1:
+        wd1 = WIDTH1
+        wd2 = WIDTH2
+        gap = GAP1
+        diff = HEIGHT2 - HEIGHT1
+    elif xpos < WIDTH1 + GAP1 + WIDTH2 + GAP2:
+        wd1 = WIDTH2
+        wd2 = WIDTH3
+        gap = GAP2
+        diff = HEIGHT3 - HEIGHT2
+    else:
+        wd1 = WIDTH3
+        wd2 = 0.0
+        gap = 0.0
+        diff = 0.0
+    return [wd1, wd2, gap, diff]
 
 def param_features(state):
     ''' Defines a simple linear set of state variables. '''
