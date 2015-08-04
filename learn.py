@@ -4,7 +4,7 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, Enemy, Player, scale_state, STATE_DIM
+from simulator import Simulator, Enemy, Player, scale_state, STATE_DIM, platform_features
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -83,6 +83,7 @@ def param_features(state):
     ''' Defines a simple linear set of state variables. '''
     array = np.ones(state.size + 1)
     array[1:] = scale_state(state)
+    array = np.append(array, platform_features(state))
     return array
 
 def initial_features(state):
