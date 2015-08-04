@@ -43,6 +43,38 @@ ENEMY_SPEED = 30.0
 LEAP_DEV = 5.0
 HOP_DEV = 1.0
 ENEMY_NOISE = 0.5
+CHECK_SCALE = False
+
+def scale_state(state):
+    ''' Scale state variables between 0 and 1. '''
+    new_state = np.copy(state)
+    scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
+    if CHECK_SCALE:
+        for i in range(scaled.size):
+            if not 0 <= scaled[i] <= 1:
+                print i, scaled[i], new_state[i]
+                assert 0 <= scaled[i] <= 1
+    return scaled
+
+def platform_features(state):
+    ''' Compute the implicit features of the platforms. '''
+    xpos = state[0]
+    if xpos < WIDTH1 + GAP1:
+        wd1 = WIDTH1
+        wd2 = WIDTH2
+        gap = GAP1
+        diff = HEIGHT2 - HEIGHT1
+    elif xpos < WIDTH1 + GAP1 + WIDTH2 + GAP2:
+        wd1 = WIDTH2
+        wd2 = WIDTH3
+        gap = GAP2
+        diff = HEIGHT3 - HEIGHT2
+    else:
+        wd1 = WIDTH3
+        wd2 = 0.0
+        gap = 0.0
+        diff = 0.0
+    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, diff / MAX_DIFF]
 
 class Platform:
     ''' Represents a fixed platform. '''
@@ -295,3 +327,9 @@ class Player(Enemy):
         collide = (precorner < self.position).all()
         collide = collide and (self.position < postcorner).all()
         return collide
+
+SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
+    ENEMY_SPEED])
+SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
+    MAX_WIDTH, 2*ENEMY_SPEED])
+STATE_DIM = Simulator().get_state().size

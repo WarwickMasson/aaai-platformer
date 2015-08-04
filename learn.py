@@ -4,10 +4,7 @@ This file implements learning agents for the goal domain.
 import numpy as np
 import pickle
 from numpy.linalg import norm
-from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED
-from simulator import MAX_DX, Enemy, Player, GAP1, GAP2
-from simulator import WIDTH1, WIDTH2, WIDTH3, HEIGHT1, HEIGHT2, HEIGHT3
-from simulator import MAX_GAP, MAX_PLATWIDTH
+from simulator import Simulator, Enemy, Player, scale_state, STATE_DIM
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -38,7 +35,6 @@ def format_array(values):
     return [formatf(value) for value in values]
 
 FOURIER_DIM = 6
-STATE_DIM = Simulator().get_state().size
 COUPLING = STATE_DIM - 2
 def generate_coefficients(coeffs, vector, depth=0, count=0):
     ''' Generate all coefficient vectors. '''
@@ -60,27 +56,11 @@ def get_coeffs():
         scale[i] = norm(coeffs[i])
     return coeffs, scale, count
 
-SHIFT_VECTOR = np.array([Player.size[0], 0.0, 0.0,
-    ENEMY_SPEED])
-SCALE_VECTOR = np.array([MAX_WIDTH + Player.size[0], MAX_DX,
-    MAX_WIDTH, 2*ENEMY_SPEED])
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 1.0
 INITIAL_HOP = 100.0
 INITIAL_LEAP = 500.0
-CHECK_SCALE = False
-
-def scale_state(state):
-    ''' Scale state variables between 0 and 1. '''
-    new_state = np.copy(state)
-    scaled = (new_state + SHIFT_VECTOR) / SCALE_VECTOR
-    if CHECK_SCALE:
-        for i in range(scaled.size):
-            if not 0 <= scaled[i] <= 1:
-                print i, scaled[i], new_state[i]
-                assert 0 <= scaled[i] <= 1
-    return scaled
 
 def fourier_basis(state):
     ''' Defines a fourier basis function. '''
@@ -98,26 +78,6 @@ def polynomial_basis(state):
         basis[i] = coeff.dot(scaled)
     basis[0] = 1.0
     return basis
-
-def platform_features(state):
-    ''' Compute the implicit features of the platforms. '''
-    xpos = state[0]
-    if xpos < WIDTH1 + GAP1:
-        wd1 = WIDTH1
-        wd2 = WIDTH2
-        gap = GAP1
-        diff = HEIGHT2 - HEIGHT1
-    elif xpos < WIDTH1 + GAP1 + WIDTH2 + GAP2:
-        wd1 = WIDTH2
-        wd2 = WIDTH3
-        gap = GAP2
-        diff = HEIGHT3 - HEIGHT2
-    else:
-        wd1 = WIDTH3
-        wd2 = 0.0
-        gap = 0.0
-        diff = 0.0
-    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, diff / MAX_DIFF]
 
 def param_features(state):
     ''' Defines a simple linear set of state variables. '''

@@ -2,7 +2,8 @@
 Plot runs.
 '''
 import matplotlib.pyplot as plt
-from learn import load, SHIFT_VECTOR, SCALE_VECTOR, fourier_basis, STATE_DIM, FixedSarsaAgent
+from learn import load, fourier_basis, FixedSarsaAgent
+from simulator import SHIFT_VECTOR, SCALE_VECTOR, STATE_DIM
 import numpy as np
 import simulator
 import scipy.stats as t
