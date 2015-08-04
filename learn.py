@@ -7,6 +7,7 @@ from numpy.linalg import norm
 from simulator import Simulator, MAX_WIDTH, ENEMY_SPEED
 from simulator import MAX_DX, Enemy, Player, GAP1, GAP2
 from simulator import WIDTH1, WIDTH2, WIDTH3, HEIGHT1, HEIGHT2, HEIGHT3
+from simulator import MAX_GAP, MAX_PLATWIDTH
 
 def softmax(values):
     ''' Returns the softmax weighting of a set of values. '''
@@ -116,7 +117,7 @@ def platform_features(state):
         wd2 = 0.0
         gap = 0.0
         diff = 0.0
-    return [wd1, wd2, gap, diff]
+    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, diff / MAX_DIFF]
 
 def param_features(state):
     ''' Defines a simple linear set of state variables. '''
