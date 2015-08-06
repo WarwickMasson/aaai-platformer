@@ -124,9 +124,9 @@ class FixedSarsaAgent:
         self.action_weights = []
         self.filename = 'runs/' + self.name +'/'+ str(run)
         self.parameter_weights = [
-            INITIAL_RUN*np.eye(STATE_DIM + 1, 1)[:, 0],
-            INITIAL_HOP*np.eye(STATE_DIM + 1, 1)[:, 0],
-            INITIAL_LEAP*np.eye(STATE_DIM + 1, 1)[:, 0]]
+            INITIAL_RUN*np.eye(self.get_param_size(0), 1)[:, 0],
+            INITIAL_HOP*np.eye(self.get_param_size(1), 1)[:, 0],
+            INITIAL_LEAP*np.eye(self.get_param_size(2), 1)[:, 0]]
         for _ in range(self.action_count):
             self.action_weights.append(np.zeros((BASIS_COUNT,)))
         self.steps = 0.0
@@ -137,6 +137,9 @@ class FixedSarsaAgent:
         self.returns = []
         self.alpha = 1.0
         self.temperature = 1.0
+
+    def get_param_size(self, act):
+        return self.parameter_features[act](np.zeros((STATE_DIM,))).size
 
     def run_episode(self, simulator=None):
         ''' Run a single episode for a maximum number of steps. '''
