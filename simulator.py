@@ -25,14 +25,10 @@ WIDTH2 = 325
 WIDTH3 = 100
 GAP1 = 75
 GAP2 = 100
-HEIGHT1 = 0.0
-HEIGHT2 = HEIGHT1 + 7.5
-HEIGHT3 = HEIGHT2 - 5.0
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 MAX_GAP = max(GAP1, GAP2)
-MAX_DIFF = max(HEIGHT1, HEIGHT2, HEIGHT3)
 DT = 0.05
 MAX_DX = 100.0
 MAX_DY = 50.0
@@ -60,27 +56,27 @@ def platform_features(state):
     ''' Compute the implicit features of the platforms. '''
     xpos = state[0]
     if xpos < WIDTH1 + GAP1:
+        pos = 0.0
         wd1 = WIDTH1
         wd2 = WIDTH2
         gap = GAP1
-        diff = HEIGHT2 - HEIGHT1
     elif xpos < WIDTH1 + GAP1 + WIDTH2 + GAP2:
+        pos = WIDTH1 + GAP1
         wd1 = WIDTH2
         wd2 = WIDTH3
         gap = GAP2
-        diff = HEIGHT3 - HEIGHT2
     else:
+        pos = WIDTH1 + GAP1 + WIDTH2 + GAP2
         wd1 = WIDTH3
         wd2 = 0.0
         gap = 0.0
-        diff = 0.0
-    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, diff / MAX_DIFF]
+    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, pos / MAX_WIDTH]
 
 class Platform:
     ''' Represents a fixed platform. '''
 
-    def __init__(self, xpos, width, height):
-        self.position = vector(xpos, height)
+    def __init__(self, xpos, width):
+        self.position = vector(xpos, 0.0)
         self.size = vector(width, PLATHEIGHT)
 
 class Simulator:
@@ -91,10 +87,10 @@ class Simulator:
         ''' The entities are set up and added to a space. '''
         self.xpos = 0.0
         self.player = Player()
-        self.platform1 = Platform(0.0, WIDTH1, HEIGHT1)
-        self.platform2 = Platform(GAP1 + self.platform1.size[0], WIDTH2, HEIGHT2)
+        self.platform1 = Platform(0.0, WIDTH1)
+        self.platform2 = Platform(GAP1 + self.platform1.size[0], WIDTH2)
         self.platform3 = Platform(self.platform2.position[0] +
-            GAP2 + self.platform2.size[0], WIDTH3, HEIGHT3)
+            GAP2 + self.platform2.size[0], WIDTH3)
         self.enemy1 = Enemy(self.platform1)
         self.enemy2 = Enemy(self.platform2)
         self.states = []
