@@ -435,7 +435,9 @@ class QpamdpAgent(FixedSarsaAgent):
             new_ret = self.update()
         updates = int((steps - self.qsteps) / (self.runs + self.relearn))
         for step in range(updates):
+            self.temperature = 0.0
             new_ret = self.parameter_update()
+            self.temperature = 0.05
             for _ in range(self.relearn):
                 new_ret = self.update()
         return self.returns
@@ -452,8 +454,10 @@ class EnacAoAgent(QpamdpAgent):
         ''' Learn for a given number of steps. '''
         updates = int(steps / (self.qsteps + self.gradsteps * self.runs))
         for _ in range(updates):
+            self.temperature = 1.0
             for i in range(self.qsteps):
                 new_ret = self.update()
+            self.temperature = 0.0
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
         return self.returns
@@ -469,6 +473,7 @@ class EnacAgent(QpamdpAgent):
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
         updates = int(steps / self.runs)
+        self.temperature = 0.01
         for step in range(updates):
             new_ret = self.parameter_update()
         return self.returns
