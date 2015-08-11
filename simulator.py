@@ -24,7 +24,7 @@ WIDTH1 = 250
 WIDTH2 = 325
 WIDTH3 = 100
 GAP1 = 75
-GAP2 = 100
+GAP2 = 75
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
@@ -185,6 +185,7 @@ class Simulator:
         while run:
             if act == "run":
                 diff = DT
+                params = max(params, DT / 10)
                 if params < DT:
                     diff = params
                 if params > 0:

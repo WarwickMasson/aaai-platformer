@@ -114,7 +114,7 @@ class FixedSarsaAgent:
     lmb = 0.5
     gamma = 0.9
     cooling = 0.995
-    variances = [0.001, 0.1, 0.1]
+    variances = [0.001, 0.001, 0.001]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
     action_features = [fourier_basis, fourier_basis, fourier_basis]
@@ -346,6 +346,7 @@ class QpamdpAgent(FixedSarsaAgent):
     beta = 0.1
     qsteps = 2000
     opt_omega = False
+    norm_grad = False
 
     def get_parameters(self):
         ''' Returns all the parameters in a vector. '''
@@ -423,7 +424,7 @@ class QpamdpAgent(FixedSarsaAgent):
     def parameter_update(self):
         ''' Perform a single gradient update. '''
         grad, returns = self.enac_gradient()
-        if norm(grad) > 0:
+        if norm(grad) > 0 and self.norm_grad:
             grad /= norm(grad)
         self.set_parameters(self.get_parameters() + self.beta * grad)
         return returns
