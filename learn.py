@@ -446,7 +446,7 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
-    gradsteps = 100
+    gradsteps = 160
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
