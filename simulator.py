@@ -182,16 +182,12 @@ class Simulator:
         act, params = action
         self.xpos = self.player.position[0]
         step = 0
+        difft = 1.0
         while run:
             if act == "run":
-                diff = DT
-                params = max(params, DT / 10)
-                if params < DT:
-                    diff = params
-                if params > 0:
-                    reward, end_episode = self.update(('run', 2.0), diff)
-                    params -= diff
-                run = params > 0
+                reward, end_episode = self.update(('run', params), DT)
+                difft -= DT
+                run = difft > 0
             elif act in ['jump', 'hop', 'leap']:
                 reward, end_episode = self.update(action)
                 run = not self.on_platforms()

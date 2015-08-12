@@ -58,7 +58,7 @@ def get_coeffs():
 
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
-INITIAL_RUN = 1.0
+INITIAL_RUN = 2.0
 INITIAL_HOP = 100.0
 INITIAL_LEAP = 500.0
 
@@ -435,9 +435,7 @@ class QpamdpAgent(FixedSarsaAgent):
             new_ret = self.update()
         updates = int((steps - self.qsteps) / (self.runs + self.relearn))
         for step in range(updates):
-            self.temperature = 0.0
             new_ret = self.parameter_update()
-            self.temperature = 0.05
             for _ in range(self.relearn):
                 new_ret = self.update()
         return self.returns
