@@ -321,20 +321,6 @@ class FixedSarsaAgent:
             rets = self.update()
         return self.returns
 
-class HardcodedAgent(FixedSarsaAgent):
-    ''' A hard-coded fixed deterministic policy agent. '''
-
-    name = 'hardcoded'
-    legend = 'Hardcoded Agent'
-    colour = 'k'
-
-    def action_policy(self, state):
-        ''' Selects an action. '''
-        if state[0] == 0:
-            return 0
-        else:
-            return 1
-
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
