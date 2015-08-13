@@ -113,7 +113,6 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.9
-    cooling = 0.995
     variances = [0.001, 0.001, 0.001]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
@@ -137,6 +136,7 @@ class FixedSarsaAgent:
         self.returns = []
         self.alpha = 1.0
         self.temperature = 1.0
+        self.cooling = 0.995
 
     def get_param_size(self, act):
         return self.parameter_features[act](np.zeros((STATE_DIM,))).size
@@ -433,17 +433,21 @@ class EnacAoAgent(QpamdpAgent):
     legend = 'AO'
     colour = 'b'
     gradsteps = 160
+    relearn = 500
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
-        updates = int(steps / (self.qsteps + self.gradsteps * self.runs))
+        updates = int((steps - self.qsteps) / (self.relearn + self.gradsteps * self.runs))
+        for _ in range(self.qsteps):
+            new_ret = self.update()
+        self.cooling = 0.99
         for _ in range(updates):
-            self.temperature = 1.0
-            for i in range(self.qsteps):
-                new_ret = self.update()
             self.temperature = 0.0
             for i in range(self.gradsteps):
                 new_ret = self.parameter_update()
+            self.temperature = 1.0
+            for i in range(self.relearn):
+                new_ret = self.update()
         return self.returns
 
 class EnacAgent(QpamdpAgent):
