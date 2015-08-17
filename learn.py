@@ -84,6 +84,8 @@ def param_features(state):
     array = np.ones(state.size + 1)
     array[1:] = scale_state(state)
     array = np.append(array, platform_features(state))
+    array = np.append(array, array[1:]**2)
+    array = np.append(array, array[1:]**3)
     return array
 
 def initial_features(state):
@@ -329,7 +331,7 @@ class QpamdpAgent(FixedSarsaAgent):
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 0.1
+    beta = 0.01
     qsteps = 2000
     opt_omega = False
     norm_grad = False
