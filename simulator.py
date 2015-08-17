@@ -262,7 +262,10 @@ class Player(Enemy):
         time = 2.0 * dy0 / self.gravity + 1.0
         dx0 = diffx / time - self.velocity[0]
         dx0 = bound(dx0, -MAX_DDX, MAX_DY - dy0)
-        noise = -abs(np.random.normal(0.0, dev, 2))
+        if dev > 0:
+            noise = -abs(np.random.normal(0.0, dev, 2))
+        else:
+            noise = np.zeros((2,))
         accel = vector(dx0, dy0) + noise
         self.accelerate(accel / DT)
 
