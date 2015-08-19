@@ -59,7 +59,7 @@ def get_coeffs():
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 2.0
-INITIAL_HOP = 100.0
+INITIAL_HOP = 75.0
 INITIAL_LEAP = 500.0
 
 def fourier_basis(state):
@@ -138,7 +138,7 @@ class FixedSarsaAgent:
         self.returns = []
         self.alpha = 1.0
         self.temperature = 1.0
-        self.cooling = 0.995
+        self.cooling = 0.998
 
     def get_param_size(self, act):
         return self.parameter_features[act](np.zeros((STATE_DIM,))).size

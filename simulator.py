@@ -23,26 +23,27 @@ def bound_vector(vect, xmax, ymax):
 WIDTH1 = 250
 WIDTH2 = 325
 WIDTH3 = 100
-GAP1 = 75
-GAP2 = 75
-HEIGHT1 = 0.0
-HEIGHT2 = 0.0
-HEIGHT3 = 0.0
+GAP1 = 40
+GAP2 = 150
+HEIGHT1 = 5.0
+HEIGHT2 = 20.0
+HEIGHT3 = 10.0
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 MAX_GAP = max(GAP1, GAP2)
 DT = 0.05
 MAX_DX = 100.0
-MAX_DY = 50.0
-MAX_DX_ON = 50.0
-MAX_DDX = 50.0 / DT
+MAX_DY = 100.0
+MAX_DX_ON = 75.0
+MAX_DDX = 25.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
-LEAP_DEV = 5.0
-HOP_DEV = 1.0
+LEAP_DEV = 7.5
+HOP_DEV = 5.0
 ENEMY_NOISE = 0.5
 CHECK_SCALE = False
+GRAVITY = 1.2*9.8
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
@@ -225,7 +226,6 @@ class Enemy:
 
 class Player(Enemy):
     ''' Represents the player character. '''
-    gravity = 9.8
     decay = 0.99
 
     def __init__(self):
@@ -262,7 +262,7 @@ class Player(Enemy):
 
     def jump_to(self, diffx, dy0, dev):
         ''' Jump to a specific position. '''
-        time = 2.0 * dy0 / self.gravity + 1.0
+        time = 2.0 * dy0 / GRAVITY + 1.0
         dx0 = diffx / time - self.velocity[0]
         dx0 = bound(dx0, -MAX_DDX, MAX_DY - dy0)
         if dev > 0:
@@ -282,7 +282,7 @@ class Player(Enemy):
 
     def fall(self):
         ''' Apply gravity. '''
-        self.accelerate(vector(0.0, -self.gravity))
+        self.accelerate(vector(0.0, -GRAVITY))
 
     def decollide(self, other):
         ''' Shift overlapping entities apart. '''
