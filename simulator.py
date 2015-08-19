@@ -28,6 +28,7 @@ GAP2 = 150
 HEIGHT1 = 5.0
 HEIGHT2 = 20.0
 HEIGHT3 = 10.0
+MAX_HEIGHT = max(1.0, HEIGHT1, HEIGHT2, HEIGHT3)
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
 MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
@@ -64,17 +65,20 @@ def platform_features(state):
         wd1 = WIDTH1
         wd2 = WIDTH2
         gap = GAP1
+        diff = HEIGHT2 - HEIGHT1
     elif xpos < WIDTH1 + GAP1 + WIDTH2 + GAP2:
         pos = WIDTH1 + GAP1
         wd1 = WIDTH2
         wd2 = WIDTH3
         gap = GAP2
+        diff = HEIGHT3 - HEIGHT2
     else:
         pos = WIDTH1 + GAP1 + WIDTH2 + GAP2
         wd1 = WIDTH3
         wd2 = 0.0
         gap = 0.0
-    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, pos / MAX_WIDTH]
+        diff = 0.0
+    return [wd1 / MAX_PLATWIDTH, wd2 / MAX_PLATWIDTH, gap / MAX_GAP, pos / MAX_WIDTH, diff / MAX_HEIGHT]
 
 class Platform:
     ''' Represents a fixed platform. '''
