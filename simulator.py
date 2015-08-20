@@ -23,11 +23,11 @@ def bound_vector(vect, xmax, ymax):
 WIDTH1 = 250
 WIDTH2 = 325
 WIDTH3 = 100
-GAP1 = 40
-GAP2 = 150
-HEIGHT1 = 5.0
-HEIGHT2 = 20.0
-HEIGHT3 = 10.0
+GAP1 = 100
+GAP2 = 175
+HEIGHT1 = 0.0
+HEIGHT2 = 10.0
+HEIGHT3 = 5.0
 MAX_HEIGHT = max(1.0, HEIGHT1, HEIGHT2, HEIGHT3)
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
@@ -40,11 +40,11 @@ MAX_DX_ON = 75.0
 MAX_DDX = 25.0 / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
-LEAP_DEV = 7.5
-HOP_DEV = 5.0
+LEAP_DEV = 5.0
+HOP_DEV = 1.0
 ENEMY_NOISE = 0.5
 CHECK_SCALE = False
-GRAVITY = 1.2*9.8
+GRAVITY = 9.8
 
 def scale_state(state):
     ''' Scale state variables between 0 and 1. '''
@@ -180,6 +180,7 @@ class Simulator:
         for platform in [self.platform1, self.platform2, self.platform3]:
             if self.player.colliding(platform):
                 self.player.decollide(platform)
+                self.player.velocity[0] = 0.0
         reward = (self.player.position[0] - self.xpos) / self.right_bound()
         return self.terminal_check(reward)
 
