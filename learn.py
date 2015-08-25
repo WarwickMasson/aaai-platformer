@@ -58,7 +58,7 @@ def get_coeffs():
 
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
-INITIAL_RUN = 5.0
+INITIAL_RUN = 3.0
 INITIAL_HOP = 50.0
 INITIAL_LEAP = 500.0
 
@@ -84,8 +84,6 @@ def param_features(state):
     array = np.ones(state.size + 1)
     array[1:] = scale_state(state)
     array = np.append(array, platform_features(state))
-    array = np.append(array, array[1:]**2)
-    array = np.append(array, array[1:]**3)
     return array
 
 def initial_features(state):
@@ -114,7 +112,7 @@ class FixedSarsaAgent:
     colour = 'r'
     action_count = 3
     lmb = 0.5
-    gamma = 0.9
+    gamma = 0.999
     variances = [0.001, 0.001, 0.001]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
@@ -138,7 +136,7 @@ class FixedSarsaAgent:
         self.returns = []
         self.alpha = 1.0
         self.temperature = 1.0
-        self.cooling = 0.995
+        self.cooling = 0.997
 
     def get_param_size(self, act):
         return self.parameter_features[act](np.zeros((STATE_DIM,))).size
@@ -156,11 +154,11 @@ class FixedSarsaAgent:
         acts = [act]
         while not end_ep:
             action = self.policy(state, act)
-            new_state, reward, end_ep, _ = simulator.take_action(action)
+            new_state, reward, end_ep, steps = simulator.take_action(action)
             new_act = self.action_policy(new_state)
             delta = reward - self.state_quality(state, act)
             if not end_ep:
-                delta += self.gamma * self.state_quality(new_state, new_act)
+                delta += (self.gamma**steps) * self.state_quality(new_state, new_act)
             self.tdiff += abs(delta)
             self.steps += 1.0
             state = new_state
@@ -288,13 +286,13 @@ class FixedSarsaAgent:
             traces.append(np.zeros((BASIS_COUNT,)))
         while not end_episode:
             action = self.policy(state, act)
-            state, reward, end_episode, _ = simulator.take_action(action)
+            state, reward, end_episode, steps = simulator.take_action(action)
             new_act = self.action_policy(state)
             new_feat = self.action_features[new_act](state)
             rewards.append(reward)
             delta = reward - self.feat_quality(feat, act)
             if not end_episode:
-                delta += self.gamma * self.feat_quality(new_feat, new_act)
+                delta += (self.gamma)**steps * self.feat_quality(new_feat, new_act)
             self.tdiff += abs(delta)
             self.steps += 1.0
             for i in range(self.action_count):
@@ -436,9 +434,13 @@ class EnacAoAgent(QpamdpAgent):
     colour = 'b'
     gradsteps = 950
     relearn = 500
+    one_iteration = True
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
+        if self.one_iteration:
+            self.gradsteps = (steps - self.qsteps) / self.runs
+            self.relearn = 0
         updates = int((steps - self.qsteps) / (self.relearn + self.gradsteps * self.runs))
         for _ in range(self.qsteps):
             new_ret = self.update()
