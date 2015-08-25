@@ -194,7 +194,7 @@ class Simulator:
         difft = 1.0
         while run:
             if act == "run":
-                reward, end_episode = self.update(('run', params), DT)
+                reward, end_episode = self.update(('run', abs(params)), DT)
                 difft -= DT
                 run = difft > 0
             elif act in ['jump', 'hop', 'leap']:
