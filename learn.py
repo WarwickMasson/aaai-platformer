@@ -332,7 +332,7 @@ class QpamdpAgent(FixedSarsaAgent):
     beta = 0.01
     qsteps = 2000
     opt_omega = False
-    norm_grad = False
+    norm_grad = True
 
     def get_parameters(self):
         ''' Returns all the parameters in a vector. '''
