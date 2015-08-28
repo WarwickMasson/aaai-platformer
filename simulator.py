@@ -23,10 +23,10 @@ def bound_vector(vect, xmax, ymax):
 WIDTH1 = 250
 WIDTH2 = 325
 WIDTH3 = 100
-GAP1 = 210
+GAP1 = 225
 GAP2 = 275
 HEIGHT1 = 0.0
-HEIGHT2 = 10.0
+HEIGHT2 = 0.0
 HEIGHT3 = 0.0
 MAX_HEIGHT = max(1.0, HEIGHT1, HEIGHT2, HEIGHT3)
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
@@ -150,7 +150,7 @@ class Simulator:
 
     def terminal_check(self, reward=0.0):
         ''' Determines if the episode is ended, and the reward. '''
-        end_episode = self.player.position[1] < self.lower_bound()
+        end_episode = self.player.position[1] < self.lower_bound() + PLATHEIGHT
         right = self.player.position[0] >= self.right_bound()
         for entity in [self.enemy1, self.enemy2]:
             if self.player.colliding(entity):
