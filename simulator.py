@@ -23,11 +23,11 @@ def bound_vector(vect, xmax, ymax):
 WIDTH1 = 250
 WIDTH2 = 325
 WIDTH3 = 100
-GAP1 = 100
-GAP2 = 175
+GAP1 = 210
+GAP2 = 275
 HEIGHT1 = 0.0
 HEIGHT2 = 10.0
-HEIGHT3 = 5.0
+HEIGHT3 = 0.0
 MAX_HEIGHT = max(1.0, HEIGHT1, HEIGHT2, HEIGHT3)
 MAX_PLATWIDTH = max(WIDTH1, WIDTH2, WIDTH3)
 PLATHEIGHT = 40.0
@@ -35,9 +35,9 @@ MAX_WIDTH = WIDTH1 + WIDTH2 + WIDTH3 + GAP1 + GAP2
 MAX_GAP = max(GAP1, GAP2)
 DT = 0.05
 MAX_DX = 100.0
-MAX_DY = 100.0
-MAX_DX_ON = 75.0
-MAX_DDX = 25.0 / DT
+MAX_DY = 200.0
+MAX_DX_ON = 70.0
+MAX_DDX = (MAX_DX - MAX_DX_ON) / DT
 MAX_DDY = MAX_DY / DT
 ENEMY_SPEED = 30.0
 LEAP_DEV = 1.0
@@ -142,7 +142,7 @@ class Simulator:
     def lower_bound(self):
         ''' Returns the lowest height of the platforms. '''
         lower = min(self.platform1.position[1], self.platform2.position[1], self.platform3.position[1])
-        return lower - self.platform1.size[1]
+        return lower
 
     def right_bound(self):
         ''' Returns the edge of the game. '''

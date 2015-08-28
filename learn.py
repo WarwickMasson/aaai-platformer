@@ -59,8 +59,8 @@ def get_coeffs():
 COEFFS, COEFF_SCALE, BASIS_COUNT = get_coeffs()
 print "Basis Functions:", BASIS_COUNT
 INITIAL_RUN = 3.0
-INITIAL_HOP = 50.0
-INITIAL_LEAP = 500.0
+INITIAL_HOP = 10.0
+INITIAL_LEAP = 400.0
 
 def fourier_basis(state):
     ''' Defines a fourier basis function. '''
@@ -113,7 +113,7 @@ class FixedSarsaAgent:
     action_count = 3
     lmb = 0.5
     gamma = 0.999
-    variances = [0.001, 0.001, 0.001]
+    variances = [0.1, 0.1, 0.01]
     action_names = ['run', 'hop', 'leap']
     parameter_features = [param_features, param_features, param_features]
     action_features = [fourier_basis, fourier_basis, fourier_basis]
@@ -136,7 +136,7 @@ class FixedSarsaAgent:
         self.returns = []
         self.alpha = 1.0
         self.temperature = 1.0
-        self.cooling = 0.997
+        self.cooling = 0.996
 
     def get_param_size(self, act):
         return self.parameter_features[act](np.zeros((STATE_DIM,))).size
@@ -329,8 +329,8 @@ class QpamdpAgent(FixedSarsaAgent):
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 0.01
-    qsteps = 2000
+    beta = 0.1
+    qsteps = 5000
     opt_omega = False
     norm_grad = True
 
@@ -433,7 +433,7 @@ class EnacAoAgent(QpamdpAgent):
     legend = 'AO'
     colour = 'b'
     gradsteps = 950
-    relearn = 500
+    relearn = 100
     one_iteration = True
 
     def learn(self, steps):
