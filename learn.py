@@ -329,10 +329,10 @@ class QpamdpAgent(FixedSarsaAgent):
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
-    beta = 0.1
-    qsteps = 5000
+    beta = 1.0
+    qsteps = 10000
     opt_omega = False
-    norm_grad = True
+    norm_grad = False
 
     def get_parameters(self):
         ''' Returns all the parameters in a vector. '''
