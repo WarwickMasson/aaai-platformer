@@ -28,7 +28,7 @@ def plot_return(agent, returns, data=None):
         for i in range(returns.size/interval):
             plt.errorbar(1+i*interval, returns[i*interval],
                 yerr=t.sem(data[:, i*interval]), fmt='-'+agent.colour)
-    plt.axis([0, returns.size, 0.0, 1.0])
+    plt.axis([0, returns.size, 0.0, 0.5])
     plt.xlabel('Episodes')
     plt.title('Average Return')
     plt.ylabel('Average Return')
