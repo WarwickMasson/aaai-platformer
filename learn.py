@@ -324,8 +324,8 @@ class FixedSarsaAgent:
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
-    relearn = 50
-    runs = 50
+    relearn = 10
+    runs = 20
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
@@ -421,7 +421,10 @@ class QpamdpAgent(FixedSarsaAgent):
             new_ret = self.update()
         updates = int((steps - self.qsteps) / (self.runs + self.relearn))
         for step in range(updates):
+            self.temperature = 0.0
             new_ret = self.parameter_update()
+            self.temperature = 1.0
+            self.cooling = 0.95
             for _ in range(self.relearn):
                 new_ret = self.update()
         return self.returns
@@ -432,9 +435,9 @@ class EnacAoAgent(QpamdpAgent):
     name = 'enacao'
     legend = 'AO'
     colour = 'b'
-    gradsteps = 950
-    relearn = 100
-    one_iteration = True
+    gradsteps = 180
+    relearn = 1000
+    one_iteration = False
 
     def learn(self, steps):
         ''' Learn for a given number of steps. '''
