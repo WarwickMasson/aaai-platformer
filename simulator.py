@@ -21,10 +21,10 @@ def bound_vector(vect, xmax, ymax):
     return vector(xval, yval)
 
 WIDTH1 = 250
-WIDTH2 = 325
-WIDTH3 = 100
+WIDTH2 = 275
+WIDTH3 = 50
 GAP1 = 225
-GAP2 = 240
+GAP2 = 235
 HEIGHT1 = 0.0
 HEIGHT2 = 0.0
 HEIGHT3 = 0.0

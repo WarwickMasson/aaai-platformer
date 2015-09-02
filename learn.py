@@ -324,8 +324,8 @@ class FixedSarsaAgent:
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
-    relearn = 10
-    runs = 20
+    relearn = 25
+    runs = 50
     name = 'qpamdp'
     legend = 'Q-PAMDP'
     colour = 'g'
