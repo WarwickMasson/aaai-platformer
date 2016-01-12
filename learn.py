@@ -109,7 +109,7 @@ class FixedSarsaAgent:
 
     name = 'fixedsarsa'
     legend = 'Fixed Sarsa'
-    colour = 'r'
+    colour = '-k'
     action_count = 3
     lmb = 0.5
     gamma = 0.999
@@ -324,11 +324,11 @@ class FixedSarsaAgent:
 class QpamdpAgent(FixedSarsaAgent):
     ''' Defines an agent to optimize H(theta) using eNAC. '''
 
-    relearn = 25
+    relearn = 10
     runs = 50
     name = 'qpamdp'
-    legend = 'Q-PAMDP'
-    colour = 'g'
+    legend = 'Q-PAMDP(1)'
+    colour = '-.g'
     beta = 1.0
     qsteps = 10000
     opt_omega = False
@@ -433,8 +433,8 @@ class EnacAoAgent(QpamdpAgent):
     ''' Defines an alternating agent using eNAC. '''
 
     name = 'enacao'
-    legend = 'AO'
-    colour = 'b'
+    legend = 'Q-PAMDP($\infty$)'
+    colour = '--b'
     gradsteps = 180
     relearn = 1000
     one_iteration = False
@@ -447,7 +447,7 @@ class EnacAoAgent(QpamdpAgent):
         updates = int((steps - self.qsteps) / (self.relearn + self.gradsteps * self.runs))
         for _ in range(self.qsteps):
             new_ret = self.update()
-        self.cooling = 0.99
+        self.cooling = 0.995
         for _ in range(updates):
             self.temperature = 0.0
             for i in range(self.gradsteps):
@@ -462,7 +462,7 @@ class EnacAgent(QpamdpAgent):
 
     name = 'enac'
     legend = 'eNAC'
-    colour = 'r'
+    colour = ':r'
     opt_omega = True
 
     def learn(self, steps):

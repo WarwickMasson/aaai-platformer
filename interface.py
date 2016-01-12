@@ -18,16 +18,18 @@ class Interface:
     def __init__(self, sim=Simulator()):
         ''' Sets up the colors, pygame, and screen. '''
         pygame.init()
-        size = (LENGTH, WIDTH)
-        self.window = pygame.display.set_mode(size)
+        self.size = (LENGTH, WIDTH)
+        self.window = pygame.display.set_mode(self.size)
         self.clock = pygame.time.Clock()
         self.simulator = sim
-        self.background = pygame.image.load('./sprites/background.png')
-        self.platform = pygame.image.load('./sprites/platform.png')
-        self.enemy = pygame.image.load('./sprites/enemy.png')
-        self.player = pygame.image.load('./sprites/player.png')
+        self.background = pygame.image.load('./sprites/background.png').convert_alpha()
+        self.platform = pygame.image.load('./sprites/platform.png').convert_alpha()
+        self.enemy = pygame.image.load('./sprites/enemy.png').convert_alpha()
+        self.player = pygame.image.load('./sprites/player.png').convert_alpha()
         self.centre = vector(0, 100)/2
         self.total = 0.0
+        self.draw_surf = pygame.Surface(self.size)
+        self.draw_background()
 
     def control_update(self):
         ''' Uses input from the keyboard to control the player. '''
@@ -56,14 +58,13 @@ class Interface:
                 pygame.quit()
                 sys.exit()
         self.control_update()
-        self.draw_background()
         self.draw()
         self.draw_to_screen()
         self.clock.tick(1000*DT)
 
     def draw_background(self):
         ''' Draw the static elements. '''
-        self.window.blit(self.background, (0, 0))
+        self.draw_surf.blit(self.background, (0, 0))
         self.draw_entity(self.simulator.platform1, self.platform)
         self.draw_entity(self.simulator.platform2, self.platform)
         self.draw_entity(self.simulator.platform3, self.platform)
@@ -74,9 +75,10 @@ class Interface:
         self.draw_entity(self.simulator.enemy1, self.enemy)
         self.draw_entity(self.simulator.enemy2, self.enemy)
 
-    def draw_to_screen(self):
+    def draw_to_screen(self, alpha = 255):
         ''' Draw the current window to the screen. '''
-        surf = pygame.transform.flip(self.window, False, True)
+        surf = pygame.transform.flip(self.draw_surf, False, True)
+        surf.set_alpha(alpha)
         self.window.blit(surf, (0, 0))
         pygame.display.update()
 
@@ -84,7 +86,7 @@ class Interface:
         ''' Draw each state in the simulator into folder name. '''
         lines = ""
         longest = max([len(sim.states) for sim in simulators])
-        for index in range(longest):
+        for index in range(0, longest):
             self.draw_background()
             for sim in simulators:
                 if index < len(sim.states):
@@ -93,7 +95,8 @@ class Interface:
                     self.simulator.enemy1.position = state[1]
                     self.simulator.enemy2.position = state[2]
                     self.draw()
-            self.draw_to_screen()
+            alpha = 255
+            self.draw_to_screen(alpha)
             if save:
                 pygame.image.save(self.window, 'screens/'+ name + '/' + str(index)+'.png')
             lines += str(index) + '.png\n'
@@ -106,7 +109,7 @@ class Interface:
         for i in range(int(entity.size[0] / sprite.get_width())):
             pos = entity.position + self.centre
             pos[0] += int(sprite.get_width()*i)
-            self.window.blit(sprite, (pos[0], pos[1]))
+            self.draw_surf.blit(sprite, (pos[0], pos[1]))
 
 def main():
     ''' Runs the interface. '''

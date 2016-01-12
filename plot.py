@@ -22,13 +22,13 @@ def average_return(returns):
 
 def plot_return(agent, returns, data=None):
     ''' Plot return over time. '''
-    plt.plot(returns, '-' + agent.colour, label=agent.legend)
-    interval = 2000
+    plt.plot(returns, agent.colour, label=agent.legend)
+    interval = 5000
     if data != None:
         for i in range(returns.size/interval):
             plt.errorbar(1+i*interval, returns[i*interval],
-                yerr=t.sem(data[:, i*interval]), fmt='-'+agent.colour)
-    plt.axis([0, returns.size, 0.0, 1.0])
+                yerr=t.sem(data[:, i*interval]), fmt=agent.colour)
+    plt.axis([0, returns.size, 0.0, 0.8])
     plt.xlabel('Episodes')
     plt.title('Average Return')
     plt.ylabel('Average Return')
@@ -47,7 +47,7 @@ def plot_tdiffs(agent_class, runs=20):
     for run in range(1, runs + 1):
         agent = load(agent_class, run)
         tdiffs += np.array(agent.tdiffs) / runs
-    plt.plot(tdiffs, '-' + agent.colour, label=agent.legend)
+    plt.plot(tdiffs, agent.colour, label=agent.legend)
     plt.xlabel('Episodes')
     plt.title('Average Delta')
     plt.ylabel('Delta')
@@ -69,7 +69,8 @@ def plot_return_agents(agents, max_runs, runs=50):
     plt.legend(loc='upper left')
     plt.savefig('./runs/return', bbox_inches='tight')
 
-PLOT_EPISODES = 50
+PLOT_EPISODES = 1
+SAVE = True
 
 def plot_episode(agent_class, run):
     ''' Plot an example run. '''
@@ -80,7 +81,7 @@ def plot_episode(agent_class, run):
         agent.run_episode(sim)
         sims.append(sim)
     import interface
-    interface.Interface().draw_episode(sims, 'after')
+    interface.Interface().draw_episode(sims, 'after', SAVE)
 
 def plot_value_function(agent_class, run, i):
     ''' Plot the value functions for run i. '''
